@@ -182,7 +182,7 @@ sequenceDiagram
     participant C as Context service
     participant M as Sales MCP server
     U->>A: "Log a visit to Nordic Tools, they want a quote"
-    A->>C: PUT fact pending_action
+    A->>C: save turn, PUT fact pending_action (end of the turn)
     A-->>U: "I'll log this visit: ... Confirm?" + pending_action
     U->>A: confirm: true
     A->>C: GET context (pending_action)
@@ -193,7 +193,7 @@ sequenceDiagram
 ```
 
 1. The orchestrator recognises a write action and does **not** call the tool.
-2. It saves `pending_action` as a fact and returns a summary to the user.
+2. It returns a summary to the user. At the end of the turn, together with the turn, it saves `pending_action` as a fact. A pending question is only kept if the question was returned to the user, so a harness limit never leaves one behind. Any later turn that does not confirm it drops it.
 3. On the next request with `confirm: true` (or a clear "yes"), the specialist calls `log_visit` with `confirmed: true`.
 4. The MCP server records the visit and emits `business.visit_logged`.
 5. The orchestrator clears the fact and stores a `visit_summary` artefact.
@@ -209,10 +209,14 @@ If the tool is ever called without `confirmed: true`, it returns `CONFIRMATION_R
 
 ### 7.4 Harness limit
 
-1. A turn reaches 6 steps, a tool call passes 10 s, or the turn passes 60 s.
-2. The harness stops the graph.
-3. The user gets "I couldn't finish this request; please try again or narrow it down."
-4. The span records `harness.limit` (`max_steps`, `tool_timeout` or `turn_timeout`).
+1. A turn reaches 6 steps (a step is one model call), a tool call passes 10 s, or the turn passes 60 s. The 60 s include loading the context.
+2. The harness stops the graph and clears any `pending_action`.
+3. The user gets one of three messages, depending on what the turn had already written:
+    - nothing written: "I couldn't finish this request; please try again or narrow it down."
+    - a visit was logged before the limit: "The visit was logged, but I couldn't finish the rest of your request." This is not a failure.
+    - a write was cut off and its result is unknown: "I'm not sure whether the visit was saved. Please check it before trying again."
+4. The span records `harness.limit` (`max_steps`, `tool_timeout` or `turn_timeout`), `harness.steps_used`, and the status `ERROR` with the limit as description.
+5. The turn is saved outside the limits, with a short fixed cap. If it cannot be saved, the answer is still returned and the span records it. If the context cannot be loaded, the turn fails with "I couldn't reach the conversation history; please try again."
 
 ## 8. Data
 
