@@ -1,0 +1,71 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: fsa
+      POSTGRES_PASSWORD: fsa
+      POSTGRES_DB: fsa
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fsa -d fsa"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  phoenix:
+    image: arizephoenix/phoenix:version-20.10.0
+    ports:
+      - "6006:6006"
+
+  mcp-sales:
+    build: ./services/mcp-sales
+    env_file: .env
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./mock-data:/app/mock-data
+    depends_on:
+      - phoenix
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  context:
+    build: ./services/context
+    env_file: .env
+    ports:
+      - "8002:8002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      phoenix:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8002/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  agent:
+    build: ./services/agent
+    env_file: .env
+    ports:
+      - "8000:8000"
+    depends_on:
+      mcp-sales:
+        condition: service_healthy
+      context:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:
