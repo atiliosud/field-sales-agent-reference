@@ -43,3 +43,17 @@ All services:
 ```bash
 for s in services/*/; do (cd "$s" && uv run pytest) || exit 1; done
 ```
+
+The mock data and the demo token script are tested from the repository root, with their own environment in `scripts/`:
+
+```bash
+uv run --project scripts pytest tests
+```
+
+### Demo token
+
+Print a token for a salesperson (`sp-001` or `sp-002`). The script reads `JWT_SECRET` from the environment or from `.env`:
+
+```bash
+uv run --project scripts python scripts/make_token.py sp-001
+```
