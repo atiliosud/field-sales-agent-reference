@@ -40,7 +40,7 @@ jobs:
         run: |
           for port in 8000 8001 8002; do curl --fail --silent --show-error "http://localhost:$port/health"; done
       - name: Check Phoenix
-        run: curl --fail --silent --show-error --output /dev/null --retry 10 --retry-connrefused --retry-delay 2 http://localhost:6006
+        run: curl --fail --silent --show-error --output /dev/null --max-time 5 --retry 30 --retry-all-errors --retry-delay 2 --retry-max-time 90 http://localhost:6006
       - if: failure()
         run: |
           curl -sv -o /dev/null http://localhost:6006 || true
