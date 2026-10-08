@@ -43,8 +43,6 @@ jobs:
         run: curl --fail --silent --show-error --output /dev/null --max-time 5 --retry 30 --retry-all-errors --retry-delay 2 --retry-max-time 90 http://localhost:6006
       - if: failure()
         run: |
-          curl -sv -o /dev/null http://localhost:6006 || true
-          curl -sv -o /dev/null http://127.0.0.1:6006 || true
           docker compose ps
           docker compose logs --no-color --tail 100
       - if: always()
