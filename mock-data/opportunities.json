@@ -1,0 +1,17 @@
+[
+  { "id": "o-001", "customer_id": "c-001", "product_code": "P-104", "value_eur": 18500, "stage": "open", "next_step": "Send a quote for 40 anchor kits" },
+  { "id": "o-002", "customer_id": "c-001", "product_code": "P-110", "value_eur": 7200, "stage": "open", "next_step": "Arrange a product demonstration" },
+  { "id": "o-003", "customer_id": "c-001", "product_code": "P-101", "value_eur": 24000, "stage": "won", "next_step": "Confirm the delivery schedule" },
+  { "id": "o-004", "customer_id": "c-002", "product_code": "P-107", "value_eur": 12800, "stage": "quoted", "next_step": "Follow up on the quote next week" },
+  { "id": "o-005", "customer_id": "c-002", "product_code": "P-115", "value_eur": 3400, "stage": "lost", "next_step": "Review pricing at the next visit" },
+  { "id": "o-006", "customer_id": "c-003", "product_code": "P-103", "value_eur": 9600, "stage": "open", "next_step": "Check stock for a bulk order" },
+  { "id": "o-007", "customer_id": "c-004", "product_code": "P-118", "value_eur": 15300, "stage": "quoted", "next_step": "Agree the rental terms" },
+  { "id": "o-008", "customer_id": "c-005", "product_code": "P-112", "value_eur": 31000, "stage": "won", "next_step": "Schedule the on-site training" },
+  { "id": "o-009", "customer_id": "c-006", "product_code": "P-104", "value_eur": 21400, "stage": "open", "next_step": "Visit the site to confirm quantities" },
+  { "id": "o-010", "customer_id": "c-006", "product_code": "P-120", "value_eur": 6800, "stage": "quoted", "next_step": "Wait for the purchase order" },
+  { "id": "o-011", "customer_id": "c-007", "product_code": "P-109", "value_eur": 4500, "stage": "lost", "next_step": "Revisit in the next quarter" },
+  { "id": "o-012", "customer_id": "c-008", "product_code": "P-105", "value_eur": 27800, "stage": "open", "next_step": "Prepare a technical proposal" },
+  { "id": "o-013", "customer_id": "c-009", "product_code": "P-102", "value_eur": 5200, "stage": "won", "next_step": "Send the invoice" },
+  { "id": "o-014", "customer_id": "c-010", "product_code": "P-114", "value_eur": 16900, "stage": "quoted", "next_step": "Negotiate the delivery date" },
+  { "id": "o-015", "customer_id": "c-010", "product_code": "P-117", "value_eur": 8100, "stage": "open", "next_step": "Call the site manager" }
+]

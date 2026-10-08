@@ -1,0 +1,12 @@
+[
+  { "id": "c-001", "name": "Nordic Tools", "segment": "Tool retail", "region": "North", "owner": "sp-001" },
+  { "id": "c-002", "name": "Birchfield Builders", "segment": "Residential construction", "region": "North", "owner": "sp-001" },
+  { "id": "c-003", "name": "Kestrel Fixings", "segment": "Wholesale", "region": "North", "owner": "sp-001" },
+  { "id": "c-004", "name": "Polar Scaffolding", "segment": "Access and scaffolding", "region": "North", "owner": "sp-001" },
+  { "id": "c-005", "name": "Granite Lane Works", "segment": "Civil engineering", "region": "North", "owner": "sp-001" },
+  { "id": "c-006", "name": "Sunvale Contractors", "segment": "Commercial construction", "region": "South", "owner": "sp-002" },
+  { "id": "c-007", "name": "Olive Grove Construction", "segment": "Residential construction", "region": "South", "owner": "sp-002" },
+  { "id": "c-008", "name": "Marlow Fabrication", "segment": "Steel fabrication", "region": "South", "owner": "sp-002" },
+  { "id": "c-009", "name": "Redwood Joinery", "segment": "Joinery", "region": "South", "owner": "sp-002" },
+  { "id": "c-010", "name": "Coastline Civil Works", "segment": "Civil engineering", "region": "South", "owner": "sp-002" }
+]
