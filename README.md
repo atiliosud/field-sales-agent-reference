@@ -57,3 +57,11 @@ Print a token for a salesperson (`sp-001` or `sp-002`). The script reads `JWT_SE
 ```bash
 uv run --project scripts python scripts/make_token.py sp-001
 ```
+
+### Chat client
+
+With the stack running and the `AZURE_OPENAI_*` values in `.env`, chat as a salesperson. Type `yes` to confirm a pending action and `exit` to leave:
+
+```bash
+uv run --project scripts python scripts/chat.py --as sp-001
+```
