@@ -99,6 +99,8 @@ Base URL `CONTEXT_URL`. Every call needs the JWT; a salesperson can only read an
 
 Fact keys in use: `current_customer`, `pending_action`.
 
+A fact is cleared with `PUT` and `{ "value": null }` and the current `If-Match`. The version keeps rising. The orchestrator slice lists a cleared fact with `"value": null` and its version, so that the next write can send the right `If-Match`; callers treat a `null` value as no fact. The specialist slice leaves cleared facts out.
+
 ## 8. Agent service: API
 
 `POST /chat` with the JWT.
