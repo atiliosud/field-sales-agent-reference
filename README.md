@@ -1,5 +1,7 @@
 # field-sales-agent-reference
 
+Personal study project with invented data. Not affiliated with any employer or client.
+
 An AI assistant for field salespeople that looks up customers, opportunities and stock, and logs visits. It runs locally with mock data.
 
 ## Development
