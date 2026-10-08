@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+      - run: uvx ruff@0.16.8 check .
+      - run: uvx ruff@0.16.8 format --check .
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [agent, mcp-sales, context]
+    defaults:
+      run:
+        working-directory: services/${{ matrix.service }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+      - run: uv run pytest
+
+  stack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - run: cp .env.example .env
+      - run: docker compose up --build --detach --wait
+      - name: Check service health endpoints
+        run: |
+          for port in 8000 8001 8002; do curl --fail --silent --show-error "http://localhost:$port/health"; done
+      - name: Check Phoenix
+        run: curl --fail --silent --show-error --output /dev/null --max-time 5 --retry 30 --retry-all-errors --retry-delay 2 --retry-max-time 90 http://localhost:6006
+      - if: failure()
+        run: |
+          docker compose ps
+          docker compose logs --no-color --tail 100
+      - if: always()
+        run: docker compose down --volumes
