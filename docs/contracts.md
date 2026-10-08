@@ -113,6 +113,7 @@ Fact keys in use: `current_customer`, `pending_action`.
 - Propagate the W3C `traceparent` header from the agent to the MCP server and the context service, so one turn is one trace across services.
 - On every span: `session.id` = conversation id, `user.id` = salesperson id.
 - The agent sends the header `X-Session-Id: <conversation id>` on every call to the MCP server. The MCP server sets `session.id` from it on its spans; without the header, the span has no `session.id`. The context service does not need the header, because the conversation id is in the URL.
+- All three services follow the OpenInference conventions on their spans, so that Phoenix shows one consistent trace. In particular, tool spans carry `openinference.span.kind` = `TOOL`.
 - Model spans: `prompt.id`, `prompt.version` (tokens and cost come from OpenInference).
 - Tool spans: `tool.name`, `customer.id` when present.
 - When the harness stops a turn: `harness.limit` = `max_steps`, `tool_timeout` or `turn_timeout`.
