@@ -62,6 +62,11 @@ Server name `sales`, streamable HTTP at `/mcp`. Every tool reads the JWT from th
 - Output: `{ "id", "name", "segment", "region", "owner" }`
 - Errors: `UNAUTHENTICATED`, `NOT_FOUND`, `FORBIDDEN` (not the caller's customer)
 
+### `find_customer`
+- Input: `name: str` (part of a name; case does not matter)
+- Output: `{ "customers": [ { "id", "name" } ] }`, only customers owned by the caller; an empty list when none matches
+- Errors: `UNAUTHENTICATED`, `INVALID_INPUT` (empty name). A customer of another salesperson gives the same empty list as one that does not exist, never `FORBIDDEN` or `NOT_FOUND`
+
 ### `list_opportunities`
 - Input: `customer_id: str`, `stage?: "open" | "quoted" | "won" | "lost"`
 - Output: `{ "customer_id", "opportunities": [ { "id", "product_code", "value_eur", "stage", "next_step" } ] }`

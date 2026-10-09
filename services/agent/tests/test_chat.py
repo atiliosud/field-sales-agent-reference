@@ -72,7 +72,7 @@ def test_the_orchestrator_has_no_data_tools_and_the_specialist_no_write_tools(ch
     chat("What's open with Nordic Tools?")
 
     assert model.bound[0] == ["answer", "handoff", "request_confirmation"]
-    assert model.bound[1] == ["get_customer", "list_opportunities", "check_stock"]
+    assert model.bound[1] == ["get_customer", "find_customer", "list_opportunities", "check_stock"]
 
 
 def test_the_specialist_gets_the_task_and_not_the_conversation(chat, model, context):
