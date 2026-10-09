@@ -160,6 +160,8 @@ sequenceDiagram
     U->>A: "What's open with Nordic Tools?" (JWT)
     A->>C: GET context (orchestrator)
     A->>L: orchestrator decides: needs data
+    A->>M: find_customer("Nordic Tools") with JWT (specialist)
+    M-->>A: c-001 (only customers of the caller)
     A->>M: list_opportunities(c-001) with JWT
     M-->>A: open opportunities (owner checked)
     A->>L: orchestrator writes the answer
@@ -170,7 +172,7 @@ sequenceDiagram
 1. The client sends the message with the salesperson's JWT.
 2. The agent loads the orchestrator's context slice.
 3. The orchestrator decides it needs data and hands off to the specialist.
-4. The specialist calls `list_opportunities`; the MCP server checks that `c-001` belongs to the caller.
+4. The specialist resolves the name with `find_customer`, which returns only the caller's customers, then calls `list_opportunities`; the MCP server checks that `c-001` belongs to the caller. If the user gives an id, the first call is skipped.
 5. The orchestrator writes the answer, saves the turn and sets `current_customer`.
 
 ### 7.2 Write action with confirmation
@@ -182,6 +184,7 @@ sequenceDiagram
     participant C as Context service
     participant M as Sales MCP server
     U->>A: "Log a visit to Nordic Tools, they want a quote"
+    A->>M: find_customer("Nordic Tools") (specialist, read-only)
     A->>C: save turn, PUT fact pending_action (end of the turn)
     A-->>U: "I'll log this visit: ... Confirm?" + pending_action
     U->>A: confirm: true
@@ -192,7 +195,7 @@ sequenceDiagram
     A-->>U: "Visit logged."
 ```
 
-1. The orchestrator recognises a write action and does **not** call the tool.
+1. The orchestrator recognises a write action and does **not** call the tool. If the user gave a name, the specialist first resolves it with `find_customer`.
 2. It returns a summary to the user. At the end of the turn, together with the turn, it saves `pending_action` as a fact. A pending question is only kept if the question was returned to the user, so a harness limit never leaves one behind. Any later turn that does not confirm it drops it.
 3. On the next request with `confirm: true` (or a clear "yes"), the specialist calls `log_visit` with `confirmed: true`.
 4. The MCP server records the visit and emits `business.visit_logged`.
@@ -206,6 +209,7 @@ If the tool is ever called without `confirmed: true`, it returns `CONFIRMATION_R
 2. The specialist calls `get_customer(c-006)` with `sp-001`'s token.
 3. The MCP server returns `FORBIDDEN`.
 4. The orchestrator tells the user the customer is not assigned to them. No data from `c-006` appears in the answer, the trace or the context.
+5. If `sp-001` asks by name, `find_customer` returns an empty list, the same as for a name that does not exist, so the answer cannot reveal that the customer exists.
 
 ### 7.4 Harness limit
 
@@ -344,8 +348,8 @@ Provisioned with Terraform. Containers on ECS Fargate, Postgres on RDS, secrets 
 | ADR | Decision | Main reason |
 | --- | --- | --- |
 | [0001](adr/0001-shared-context-service.md) | A shared context service per conversation instead of passing full history between agents | Agents get only what they need; voice and text share one conversation; state outlives a process |
-| [0002](adr/0002-mcp-tools-with-user-identity.md) | MCP tools that act with the user's identity, with an allow-list per agent | Authorisation stays in the data owner, not in the prompt |
-| [0003](adr/0003-eval-gate-in-ci.md) | Rule-based eval gate in CI | Quality changes are caught before merge, repeatably and cheaply |
+| [0002](adr/0002-mcp-tools-with-the-user-identity.md) | MCP tools that act with the user's identity, with an allow-list per agent | Authorisation stays in the data owner, not in the prompt |
+| [0003](adr/0003-rule-based-eval-gate-in-ci.md) | Rule-based eval gate in CI | Quality changes are caught before merge, repeatably and cheaply |
 | [0004](adr/0004-model-behind-a-factory.md) | Model behind one factory function | Provider can change (gateway, Bedrock) without touching agents |
 
 ## 12. Risks, limitations and next steps
