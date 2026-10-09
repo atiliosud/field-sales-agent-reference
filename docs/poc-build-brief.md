@@ -96,7 +96,10 @@ field-sales-agent-reference/
 │   └── stock.json
 ├── prompts/
 │   ├── orchestrator.v1.yaml
-│   └── specialist.v1.yaml
+│   ├── orchestrator.v2.yaml
+│   ├── orchestrator.v3.yaml
+│   ├── specialist.v1.yaml
+│   └── specialist.v2.yaml
 ├── services/
 │   ├── mcp-sales/
 │   ├── context/
@@ -167,7 +170,7 @@ The `channel` column is what lets voice join later: the voice session writes tur
 - **Orchestrator:** owns the conversation, decides the route, writes facts, and asks for confirmation before any write action. It has no data tools.
 - **Specialist:** sales data agent. Tool allow-list: all six MCP tools, but write tools only run when the orchestrator passes `confirmed: true`.
 - **Harness (in `harness.py`, from config):** maximum 6 steps per turn, 10 seconds per tool call, 60 seconds per turn. When a limit hits, the agent says it could not finish and the span records why.
-- **Prompts:** loaded from `prompts/*.yaml` by version (`orchestrator.v1`, `specialist.v1`). The active versions come from config, and each model span carries `prompt.id` and `prompt.version`.
+- **Prompts:** loaded from `prompts/*.yaml` by version (`orchestrator.v1` to `v3`, `specialist.v1` and `v2`). The active versions come from config (today `orchestrator.v3` and `specialist.v2`), and each model span carries `prompt.id` and `prompt.version`.
 - **Context:** load the slice before each turn, save the turn and facts after it.
 - **API:** `POST /chat` with body `{conversation_id?, message}` and the user's JWT. Returns the answer, the conversation id and, when relevant, a pending action waiting for confirmation.
 - **CLI client:** `scripts/chat.py --as sp-001` for the demo.
@@ -274,7 +277,7 @@ Review README.md and docs/adr/ for accuracy against the code. List anything that
 3. Ask "Do we have P-104 in the South?"
 4. Say "Log a visit to Nordic Tools, they asked for a quote." Show that it asks for confirmation, then answer "yes".
 5. Ask about a customer owned by sp-002 and show that no data leaks.
-6. Open Phoenix: one trace for the conversation, model and tool spans, prompt version, tokens, and the `business.visit_logged` event.
+6. Open Phoenix: one trace for the conversation, model and tool spans (the lookup by name shows a `find_customer` span before `list_opportunities`), prompt version, tokens, and the `business.visit_logged` event.
 7. Show the last eval report and one ADR.
 
 ## 9. Not done yet (for the README)
