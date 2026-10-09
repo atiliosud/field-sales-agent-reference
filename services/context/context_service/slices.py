@@ -11,11 +11,7 @@ TURN_LIMIT = 10
 
 async def _facts(session: AsyncSession, conversation_id: uuid.UUID) -> dict[str, dict[str, Any]]:
     rows = await session.scalars(select(Fact).where(Fact.conversation_id == conversation_id))
-    return {
-        fact.key: {"value": fact.value, "version": fact.version}
-        for fact in rows
-        if fact.value is not None
-    }
+    return {fact.key: {"value": fact.value, "version": fact.version} for fact in rows}
 
 
 async def orchestrator_slice(session: AsyncSession, conversation_id: uuid.UUID) -> dict[str, Any]:
@@ -51,7 +47,10 @@ async def orchestrator_slice(session: AsyncSession, conversation_id: uuid.UUID) 
 
 async def specialist_slice(session: AsyncSession, conversation_id: uuid.UUID) -> dict[str, Any]:
     facts = await _facts(session, conversation_id)
+    customer = facts.get("current_customer")
     return {
         "conversation_id": str(conversation_id),
-        "facts": {key: value for key, value in facts.items() if key == "current_customer"},
+        "facts": {"current_customer": customer}
+        if customer and customer["value"] is not None
+        else {},
     }
