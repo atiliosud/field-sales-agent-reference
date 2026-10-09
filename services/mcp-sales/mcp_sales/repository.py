@@ -20,6 +20,10 @@ def _load(name: str) -> list[dict[str, Any]]:
     return json.loads((DATA_DIR / f"{name}.json").read_text(encoding="utf-8"))
 
 
+def list_customers() -> list[dict[str, Any]]:
+    return _load("customers")
+
+
 def get_customer(customer_id: str) -> dict[str, Any] | None:
     return next((c for c in _load("customers") if c["id"] == customer_id), None)
 
