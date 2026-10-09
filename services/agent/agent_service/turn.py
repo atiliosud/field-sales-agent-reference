@@ -178,5 +178,5 @@ async def save_turn(
         await context.put_fact(
             conversation_id, "pending_action", new_pending, version("pending_action")
         )
-    elif "pending_action" in facts:
+    elif facts.get("pending_action", {}).get("value") is not None:
         await context.put_fact(conversation_id, "pending_action", None, version("pending_action"))
