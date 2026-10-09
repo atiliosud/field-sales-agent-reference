@@ -67,3 +67,17 @@ With the stack running and the `AZURE_OPENAI_*` values in `.env`, chat as a sale
 ```bash
 uv run --project scripts python scripts/chat.py --as sp-001
 ```
+
+## Not done yet
+
+- Voice through a realtime model, writing turns to the same context service.
+- A web front end using AG-UI events.
+- A model gateway (LiteLLM) to compare Microsoft Foundry and Amazon Bedrock with the same evals.
+- Deployment on AWS ECS Fargate with Terraform.
+- Real identity (Entra ID or Cognito) instead of local HS256 tokens.
+- An idempotency key on `log_visit`, so that a repeated write does not log the visit twice.
+- Validating the arguments of the pending action against the schema of the tool before asking for confirmation. Today the system can ask "Shall I go ahead?" for an action that will not run.
+- `find_customer(name)`: today only Nordic Tools is known by name, through the prompt.
+- Reading the payload of an artefact.
+- Checking the context service against a real Postgres in CI instead of SQLite.
+- Docker images that install from the lock files.
