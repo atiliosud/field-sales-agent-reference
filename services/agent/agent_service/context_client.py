@@ -1,4 +1,3 @@
-import re
 from typing import Any
 
 import httpx
@@ -75,29 +74,12 @@ class ContextClient:
         self._check(response, 201)
 
     async def put_fact(self, conversation_id: str, key: str, value: Any, version: int) -> None:
-        """Write a fact as the orchestrator; `version` is the one the slice showed, or 0.
-
-        The slices leave out cleared facts, so after a clear the version is unknown and the
-        first write is a conflict. The context service names the current version in its
-        message, so the write is retried once with that version.
-        """
-        path = f"/conversations/{conversation_id}/facts/{key}"
-        for _ in range(2):
-            response = await self._send(
-                "PUT",
-                path,
-                "orchestrator",
-                json={"value": value},
-                headers={"If-Match": str(version)},
-            )
-            if response.status_code == 200:
-                return
-            current = (
-                re.search(r"at version (\d+)", response.json()["error"]["message"])
-                if response.status_code == 409
-                else None
-            )
-            if current is None:
-                break
-            version = int(current.group(1))
-        raise ContextUnavailable(f"status {response.status_code}")
+        """Write a fact as the orchestrator; `version` is the one the slice showed, or 0."""
+        response = await self._send(
+            "PUT",
+            f"/conversations/{conversation_id}/facts/{key}",
+            "orchestrator",
+            json={"value": value},
+            headers={"If-Match": str(version)},
+        )
+        self._check(response, 200)
