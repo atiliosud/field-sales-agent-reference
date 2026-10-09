@@ -10,11 +10,14 @@ from langchain_core.language_models import BaseChatModel
 from pydantic import BaseModel, Field
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from agent_service import telemetry
 from agent_service.auth import Caller, authenticated
 from agent_service.config import Settings
 from agent_service.errors import ApiError, error_body
 from agent_service.prompts import load_prompt
 from agent_service.turn import ChatService
+
+telemetry.setup()
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +40,17 @@ def create_app(settings: Settings | None = None, model: BaseChatModel | None = N
         )
         yield
 
-    app = FastAPI(title="agent-service", lifespan=lifespan)
+    app = FastAPI(
+        title="agent-service",
+        lifespan=lifespan,
+        telemetry={
+            "operation_spans": False,
+            "metrics": False,
+            "logs": False,
+            "auto_configure": False,
+            "exclude": lambda scope: scope.get("path") == "/health",
+        },
+    )
 
     @app.get("/health")
     def health() -> dict[str, str]:
@@ -47,6 +60,7 @@ def create_app(settings: Settings | None = None, model: BaseChatModel | None = N
     async def chat(
         body: ChatIn, caller: Annotated[Caller, Depends(authenticated)], request: Request
     ) -> dict[str, object]:
+        telemetry.start_turn(caller.id)
         service: ChatService = request.app.state.chat
         result = await service.chat(caller.token, body.conversation_id, body.message, body.confirm)
         response: dict[str, object] = {

@@ -7,6 +7,7 @@ from typing import Any
 from langchain_core.tools import BaseTool
 from langchain_mcp_adapters.client import MultiServerMCPClient
 
+from agent_service import telemetry
 from agent_service.harness import Harness, HarnessLimit
 
 logger = logging.getLogger(__name__)
@@ -52,6 +53,7 @@ class ToolRunner:
             "transport": "streamable_http",
             "url": url,
             "headers": {"Authorization": f"Bearer {token}", "X-Session-Id": conversation_id},
+            "httpx_client_factory": telemetry.traced_http_client,
         }
         self._harness = harness
         self._tools: dict[str, BaseTool] | None = None
@@ -75,15 +77,21 @@ class ToolRunner:
             if not available:
                 return _failure("INVALID_INPUT", f"The tool {name} is not available.")
             call = {"name": name, "args": arguments, "id": uuid.uuid4().hex, "type": "tool_call"}
-            message = await self._harness.run_tool(
-                available[0].ainvoke(call), write_tool=name if write else None
-            )
+            attributes = {"tool.name": name}
+            if "customer_id" in arguments:
+                attributes["customer.id"] = arguments["customer_id"]
+            with telemetry.tracer.start_as_current_span(f"call {name}", attributes=attributes):
+                message = await self._harness.run_tool(
+                    available[0].ainvoke(call), write_tool=name if write else None
+                )
+                result = ToolResult(message.status != "error", _text(message.content))
+                if not result.ok:
+                    telemetry.mark_failed(result.data.get("error", {}).get("code", "INTERNAL"))
         except HarnessLimit:
             raise
         except Exception as error:
             logger.error("Tool %s failed: %s", name, type(error).__name__)
             return _failure("INTERNAL", "The tool could not be reached.")
-        result = ToolResult(message.status != "error", _text(message.content))
         if write:
             self._harness.write_finished(result.ok)
         if result.ok and name == "log_visit":
