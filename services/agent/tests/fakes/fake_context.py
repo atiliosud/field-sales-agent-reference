@@ -100,12 +100,14 @@ def create_fake_context(state: FakeContext) -> FastAPI:
                 return _error(
                     400, "INVALID_INPUT", "The agent parameter must match the X-Agent-Role header."
                 )
-            live = {k: v for k, v in conversation.facts.items() if v["value"] is not None}
             if role == "specialist":
+                shown = conversation.facts.get("current_customer")
                 return JSONResponse(
                     {
                         "conversation_id": cid,
-                        "facts": {k: v for k, v in live.items() if k == "current_customer"},
+                        "facts": {"current_customer": shown}
+                        if shown and shown["value"] is not None
+                        else {},
                     }
                 )
             artifacts = [
@@ -115,7 +117,7 @@ def create_fake_context(state: FakeContext) -> FastAPI:
                 {
                     "conversation_id": cid,
                     "turns": conversation.turns[-10:],
-                    "facts": live,
+                    "facts": conversation.facts,
                     "artifacts": artifacts,
                 }
             )
@@ -148,9 +150,7 @@ def create_fake_context(state: FakeContext) -> FastAPI:
             expected = int(request.headers.get("if-match", "-1"))
             current = conversation.facts.get(key, {"version": 0})["version"]
             if expected != current:
-                return _error(
-                    409, "CONFLICT", f"Fact {key} is at version {current}, not {expected}."
-                )
+                return _error(409, "CONFLICT", f"Fact {key} was changed by another request.")
             conversation.facts[key] = {"value": body["value"], "version": current + 1}
             return JSONResponse({"key": key, "value": body["value"], "version": current + 1})
         return _error(404, "NOT_FOUND", "The resource was not found.")

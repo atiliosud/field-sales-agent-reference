@@ -133,6 +133,21 @@ def test_a_new_question_after_a_cleared_one_is_saved(chat, model, context):
     assert fact["value"]["summary"] == QUESTION and fact["version"] == 3
 
 
+def test_a_cleared_fact_is_not_shown_to_the_orchestrator_model(chat, model, context):
+    first = start(chat, model)
+    cid = first["conversation_id"]
+    confirm_visit_script(model)
+    chat("yes", conversation_id=cid, confirm=True)
+    assert context.fact(cid, "pending_action")["value"] is None
+    model.prompts.clear()
+    model.script += [call("answer", text="Hello again.")]
+
+    chat("Hi again", conversation_id=cid)
+
+    shown = " ".join(str(m.content) for m in model.prompts[0])
+    assert "pending_action" not in shown and "null" not in shown
+
+
 def test_the_model_cannot_choose_a_write_tool_that_does_not_exist(chat, model, context):
     model.script += [
         call("request_confirmation", tool="delete_everything", arguments={}, summary="x")
