@@ -76,6 +76,7 @@ class McpCall:
     arguments: dict[str, Any]
     authorization: str | None
     session_id: str | None
+    traceparent: str | None = None
 
 
 @dataclass
@@ -116,7 +117,13 @@ def create_fake_mcp(state: FakeMcp) -> tuple[FastMCP, Any]:
     ) -> CallToolResult:
         headers = ctx.request_context.request.headers  # type: ignore[union-attr]
         state.calls.append(
-            McpCall(tool, arguments, headers.get("authorization"), headers.get("x-session-id"))
+            McpCall(
+                tool,
+                arguments,
+                headers.get("authorization"),
+                headers.get("x-session-id"),
+                headers.get("traceparent"),
+            )
         )
         await asyncio.sleep(state.delays.get(tool, 0))
         caller = subject(headers)
