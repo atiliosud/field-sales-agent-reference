@@ -9,6 +9,7 @@ from langchain_core.runnables import RunnableConfig
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
+from agent_service import telemetry
 from agent_service.context_client import ContextClient
 from agent_service.mcp_client import READ_TOOLS, WRITE_TOOLS, ToolRunner
 from agent_service.prompts import Prompt
@@ -127,7 +128,8 @@ def build_graph(deps: Deps) -> CompiledStateGraph:
             ),
         ]
         model = deps.model.bind_tools(_routing_tools(prompt, names))
-        reply = await model.ainvoke(messages, config)
+        with telemetry.model_call(prompt):
+            reply = await model.ainvoke(messages, config)
         call = reply.tool_calls[0] if reply.tool_calls else None
         if call is None or call["name"] not in names:
             return {"rounds": rounds, "route": "respond", "draft": _text(reply) or NO_ANSWER}
@@ -165,7 +167,8 @@ def build_graph(deps: Deps) -> CompiledStateGraph:
         ]
         model = deps.model.bind_tools(tools)
         while True:
-            reply = await model.ainvoke(messages, config)
+            with telemetry.model_call(prompt):
+                reply = await model.ainvoke(messages, config)
             messages.append(reply)
             if not reply.tool_calls:
                 return {"specialist_result": _text(reply) or NO_ANSWER}

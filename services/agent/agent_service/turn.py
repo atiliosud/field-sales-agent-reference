@@ -7,6 +7,7 @@ import httpx
 from langchain_core.language_models import BaseChatModel
 from langgraph.errors import GraphRecursionError
 
+from agent_service import telemetry
 from agent_service.config import Settings
 from agent_service.context_client import ContextClient, ContextRefused, ContextUnavailable
 from agent_service.errors import ApiError
@@ -63,7 +64,11 @@ class ChatService:
     ) -> TurnResult:
         settings = self._settings
         harness = Harness(settings.max_steps, settings.tool_timeout_s, settings.turn_timeout_s)
-        async with httpx.AsyncClient(base_url=settings.context_url, timeout=5.0) as http:
+        async with httpx.AsyncClient(
+            base_url=settings.context_url,
+            timeout=5.0,
+            event_hooks={"request": [telemetry.inject_traceparent]},
+        ) as http:
             context = ContextClient(http, token)
             loaded: dict[str, Any] = {}
             tools: ToolRunner | None = None
@@ -72,6 +77,7 @@ class ChatService:
                 nonlocal conversation_id, loaded, tools
                 if conversation_id is None:
                     conversation_id = await context.create_conversation()
+                telemetry.set_session(conversation_id)
                 loaded = await context.load(conversation_id, "orchestrator")
                 tools = ToolRunner(settings.mcp_url, token, conversation_id, harness)
                 graph = build_graph(
@@ -113,6 +119,7 @@ class ChatService:
                     raise ApiError(500, "INTERNAL", HISTORY_UNAVAILABLE) from None
                 return TurnResult(conversation_id, HISTORY_UNAVAILABLE)
 
+            telemetry.record_harness(limit, harness.steps_used)
             if conversation_id is None:
                 raise ApiError(500, "INTERNAL", HISTORY_UNAVAILABLE)
             if limit:
@@ -146,6 +153,7 @@ class ChatService:
             except Exception as error:
                 logger.error("The turn could not be saved: %s", type(error).__name__)
                 result.save_failed = True
+                telemetry.record_save_failed()
             return result
 
 
