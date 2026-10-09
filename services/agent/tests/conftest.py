@@ -9,6 +9,9 @@ from fakes.fake_mcp import FakeMcp, create_fake_mcp
 from fakes.fake_model import FakeChatModel
 from fakes.servers import serve
 from fastapi.testclient import TestClient
+from opentelemetry import trace
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 
 from agent_service.config import Settings
 from agent_service.main import create_app
@@ -22,6 +25,18 @@ def jwt_secret() -> Iterator[None]:
     patch.setenv("JWT_SECRET", SECRET)
     yield
     patch.undo()
+
+
+@pytest.fixture(scope="session")
+def span_exporter() -> InMemorySpanExporter:
+    exporter = InMemorySpanExporter()
+    trace.get_tracer_provider().add_span_processor(SimpleSpanProcessor(exporter))  # type: ignore[attr-defined]
+    return exporter
+
+
+@pytest.fixture(autouse=True)
+def clear_spans(span_exporter: InMemorySpanExporter) -> None:
+    span_exporter.clear()
 
 
 @pytest.fixture(scope="session")
