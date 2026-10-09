@@ -25,7 +25,7 @@ class Settings:
             max_steps=int(env.get("HARNESS_MAX_STEPS", "6")),
             tool_timeout_s=float(env.get("HARNESS_TOOL_TIMEOUT_S", "10")),
             turn_timeout_s=float(env.get("HARNESS_TURN_TIMEOUT_S", "60")),
-            prompt_orchestrator=env.get("PROMPT_ORCHESTRATOR", "orchestrator.v1"),
+            prompt_orchestrator=env.get("PROMPT_ORCHESTRATOR", "orchestrator.v2"),
             prompt_specialist=env.get("PROMPT_SPECIALIST", "specialist.v1"),
             azure_endpoint=env.get("AZURE_OPENAI_ENDPOINT", ""),
             azure_api_key=env.get("AZURE_OPENAI_API_KEY", ""),
