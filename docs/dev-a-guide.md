@@ -98,10 +98,10 @@ Following brief section 6.1 and contracts.md sections 3 and 4, create the mock d
 ### Step 2: sales MCP server (Friday) · branch `a/step-2-mcp-server`
 
 ```text
-Following brief section 6.2 and contracts.md sections 5 and 6, build services/mcp-sales with FastMCP over streamable HTTP at /mcp on port 8001. Implement the five tools with exactly the inputs, outputs and error codes in the contract. Validate the JWT on every call. Write tools return CONFIRMATION_REQUIRED unless confirmed is true. Add tool spans and the business events from contracts.md section 9, propagating traceparent. Tests: no token, wrong owner, each read tool, write tools with and without confirmation, and one test per error code.
+Following brief section 6.2 and contracts.md sections 5 and 6, build services/mcp-sales with FastMCP over streamable HTTP at /mcp on port 8001. Implement the six tools with exactly the inputs, outputs and error codes in the contract. Validate the JWT on every call. Write tools return CONFIRMATION_REQUIRED unless confirmed is true. Add tool spans and the business events from contracts.md section 9, propagating traceparent. Tests: no token, wrong owner, each read tool, write tools with and without confirmation, and one test per error code.
 ```
 
-**Done when:** all five tools follow the contract; `sp-001` cannot read `c-006`; write tools refuse without confirmation; spans and business events appear in Phoenix; tests pass.
+**Done when:** all six tools follow the contract; `sp-001` cannot read `c-006`; write tools refuse without confirmation; spans and business events appear in Phoenix; tests pass.
 
 ### Step 3: context service (Saturday) · branch `a/step-3-context`
 

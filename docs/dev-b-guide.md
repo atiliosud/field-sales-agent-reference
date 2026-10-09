@@ -84,7 +84,7 @@ Keep pull requests to one step. Step 4 is the largest; if it grows, split it (fo
 **Before you write `harness.py`**, open a draft PR with a short description of the harness design and tag `@atiliosud`: which limits, where each one is enforced, and what the user sees when one hits. Start coding the harness after the owner agrees.
 
 ```text
-Following brief section 6.4, architecture.md sections 6.1 and 7, and contracts.md sections 6, 7 and 8, build services/agent with LangGraph: orchestrator, specialist, confirm and respond nodes. The real MCP server and context service are being built in parallel, so first create test fakes that follow the contract exactly: an in-memory fake MCP server with the same five tools and error codes, returning fixtures, and a fake context client with the same endpoints. Then build:
+Following brief section 6.4, architecture.md sections 6.1 and 7, and contracts.md sections 6, 7 and 8, build services/agent with LangGraph: orchestrator, specialist, confirm and respond nodes. The real MCP server and context service are being built in parallel, so first create test fakes that follow the contract exactly: an in-memory fake MCP server with the same six tools and error codes, returning fixtures, and a fake context client with the same endpoints. Then build:
 - the harness in harness.py, reading HARNESS_* from config (max steps, tool timeout, turn timeout); when a limit hits, the agent says it could not finish;
 - prompts loaded by version from prompts/ using PROMPT_ORCHESTRATOR and PROMPT_SPECIALIST;
 - MCP tools via langchain-mcp-adapters, forwarding the user's JWT;
