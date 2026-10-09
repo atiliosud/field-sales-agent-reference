@@ -81,7 +81,7 @@ def test_a_tool_that_is_not_available_is_an_invalid_input(mcp_url, mcp, token):
     assert json.loads(result.text)["error"]["code"] == "INVALID_INPUT"
 
 
-@pytest.mark.parametrize("name", ["orchestrator.v1", "specialist.v1"])
+@pytest.mark.parametrize("name", ["orchestrator.v1", "orchestrator.v2", "specialist.v1"])
 def test_prompts_are_loaded_by_version(name):
     prompt = load_prompt(name)
 
@@ -89,8 +89,18 @@ def test_prompts_are_loaded_by_version(name):
     assert prompt.system and prompt.input
 
 
-def test_every_routing_tool_has_a_description_in_the_orchestrator_prompt():
-    assert set(load_prompt("orchestrator.v1").tools) == set(ROUTING_TOOLS)
+@pytest.mark.parametrize("name", ["orchestrator.v1", "orchestrator.v2"])
+def test_every_routing_tool_has_a_description_in_the_orchestrator_prompt(name):
+    assert set(load_prompt(name).tools) == set(ROUTING_TOOLS)
+
+
+def test_v2_names_every_field_of_the_write_tools():
+    system = load_prompt("orchestrator.v2").system
+
+    for field in ("customer_id", "summary", "outcome", "company_name", "contact", "notes"):
+        assert field in system
+    for outcome in ("positive", "neutral", "negative", "follow_up"):
+        assert outcome in system
 
 
 def test_an_unknown_prompt_version_is_an_error():
@@ -107,4 +117,4 @@ def test_settings_have_the_defaults_of_the_contract(monkeypatch):
     settings = Settings.from_env()
 
     assert (settings.max_steps, settings.tool_timeout_s, settings.turn_timeout_s) == (6, 10, 60)
-    assert settings.prompt_orchestrator == "orchestrator.v1"
+    assert settings.prompt_orchestrator == "orchestrator.v2"
