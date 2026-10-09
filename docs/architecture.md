@@ -23,7 +23,7 @@ The project exists to show, in working code, six architecture ideas that matter 
 | 5 | No evals, no release | `evals/` and CI |
 | 6 | Decisions written down | ADRs and this document |
 
-**In scope:** text chat through an API and a CLI, five sales tools, two agents, context storage, tracing, evals, CI, local deployment with Docker Compose.
+**In scope:** text chat through an API and a CLI, six sales tools, two agents, context storage, tracing, evals, CI, local deployment with Docker Compose.
 
 **Out of scope (documented as next steps):** voice, a web front end, a model gateway with a second provider, cloud deployment, real identity. See section 12.
 
@@ -67,7 +67,7 @@ flowchart LR
 
     subgraph compose["docker compose"]
         agent["Agent service :8000<br/>LangGraph: orchestrator + specialist<br/>harness, prompts"]
-        mcp["Sales MCP server :8001<br/>5 tools, JWT check per call"]
+        mcp["Sales MCP server :8001<br/>6 tools, JWT check per call"]
         ctx["Context service :8002<br/>turns, facts, artefacts"]
         pg[("Postgres :5432")]
         phx["Arize Phoenix :6006<br/>trace UI + OTLP"]
@@ -87,7 +87,7 @@ flowchart LR
 | Container | Responsibility | Owns data | Built by |
 | --- | --- | --- | --- |
 | Agent service | Runs the conversation: routing, tool use through the specialist, confirmation flow, harness limits, prompt loading, chat API | None (stateless) | Dev B |
-| Sales MCP server | Exposes sales data as five MCP tools; enforces who can see and change what | Mock data, visits and leads written at runtime | Dev A |
+| Sales MCP server | Exposes sales data as six MCP tools; enforces who can see and change what | Mock data, visits and leads written at runtime | Dev A |
 | Context service | Stores and serves conversation state per agent | Conversations, turns, facts, artefacts in Postgres | Dev A |
 | Postgres | Storage for the context service | – | Dev A (schema) |
 | Arize Phoenix | Collects and shows traces | Traces | Docker image |
@@ -117,7 +117,7 @@ flowchart TD
 | `api` | `POST /chat`; reads the JWT and passes it down; returns answer, conversation id and any pending action |
 | `graph` | The LangGraph state machine above |
 | `orchestrator` | Owns the conversation. Decides the route, asks for confirmation before any write, and is the **only** writer of facts. Has no data tools |
-| `specialist` | Sales data agent. Allow-list: the five MCP tools. Runs write tools only when the orchestrator passes `confirmed: true`. Returns results to the orchestrator, never to the user |
+| `specialist` | Sales data agent. Allow-list: the six MCP tools. Runs write tools only when the orchestrator passes `confirmed: true`. Returns results to the orchestrator, never to the user |
 | `harness` | Wraps every turn: max 6 steps, 10 s per tool call, 60 s per turn (from config). When a limit hits, the agent says it could not finish and the span records which limit |
 | `prompts` | Loads `prompts/<name>.<version>.yaml` by the versions set in config; puts `prompt.id` and `prompt.version` on model spans |
 | `model_factory` | Creates the chat model from `AZURE_OPENAI_*`. The single place to change provider |
@@ -130,7 +130,7 @@ flowchart TD
 | --- | --- |
 | `server` | FastMCP over streamable HTTP at `/mcp` |
 | `auth` | Validates the JWT on every call and returns the caller (`sub`, `region`). No token or a bad token is an error, never empty data |
-| `tools` | `get_customer`, `list_opportunities`, `check_stock` (read); `log_visit`, `create_lead` (write, need `confirmed: true`) |
+| `tools` | `get_customer`, `find_customer`, `list_opportunities`, `check_stock` (read); `log_visit`, `create_lead` (write, need `confirmed: true`) |
 | `repository` | Reads the mock JSON; writes visits and leads to a git-ignored runtime file |
 | `telemetry` | Tool spans and business events (`business.visit_logged`, `business.lead_created`) |
 

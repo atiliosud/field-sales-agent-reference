@@ -81,7 +81,10 @@ def test_a_tool_that_is_not_available_is_an_invalid_input(mcp_url, mcp, token):
     assert json.loads(result.text)["error"]["code"] == "INVALID_INPUT"
 
 
-@pytest.mark.parametrize("name", ["orchestrator.v1", "orchestrator.v2", "specialist.v1"])
+@pytest.mark.parametrize(
+    "name",
+    ["orchestrator.v1", "orchestrator.v2", "orchestrator.v3", "specialist.v1", "specialist.v2"],
+)
 def test_prompts_are_loaded_by_version(name):
     prompt = load_prompt(name)
 
@@ -89,7 +92,7 @@ def test_prompts_are_loaded_by_version(name):
     assert prompt.system and prompt.input
 
 
-@pytest.mark.parametrize("name", ["orchestrator.v1", "orchestrator.v2"])
+@pytest.mark.parametrize("name", ["orchestrator.v1", "orchestrator.v2", "orchestrator.v3"])
 def test_every_routing_tool_has_a_description_in_the_orchestrator_prompt(name):
     assert set(load_prompt(name).tools) == set(ROUTING_TOOLS)
 
@@ -101,6 +104,48 @@ def test_v2_names_every_field_of_the_write_tools():
         assert field in system
     for outcome in ("positive", "neutral", "negative", "follow_up"):
         assert outcome in system
+
+
+def test_v3_names_no_customer_and_sends_the_specialist_to_find_one_by_name():
+    v2 = load_prompt("orchestrator.v2")
+    v3 = load_prompt("orchestrator.v3")
+
+    assert "Nordic Tools" in v2.system
+    assert "Nordic" not in v3.system
+    assert "by name" in v3.system
+    assert (v3.input, v3.tools) == (v2.input, v2.tools)
+
+
+def test_specialist_v2_may_resolve_a_name_and_v1_may_not():
+    v1 = load_prompt("specialist.v1")
+    v2 = load_prompt("specialist.v2")
+
+    assert "find_customer" not in v1.system
+    assert "find_customer" in v2.system
+    assert "only the ids" in v1.system
+    assert "only the ids" not in v2.system
+    assert (v2.input, v2.tools) == (v1.input, v1.tools)
+
+
+def test_the_two_prompts_are_chosen_separately(monkeypatch):
+    monkeypatch.setenv("MCP_URL", "http://mcp-sales:8001/mcp")
+    monkeypatch.setenv("CONTEXT_URL", "http://context:8002")
+    monkeypatch.setenv("PROMPT_ORCHESTRATOR", "orchestrator.v3")
+    monkeypatch.setenv("PROMPT_SPECIALIST", "specialist.v2")
+
+    settings = Settings.from_env()
+
+    assert (settings.prompt_orchestrator, settings.prompt_specialist) == (
+        "orchestrator.v3",
+        "specialist.v2",
+    )
+
+
+def test_v3_tells_the_orchestrator_to_stop_when_a_read_is_refused_and_that_names_are_not_ids():
+    system = load_prompt("orchestrator.v3").system
+
+    assert "Never try another route" in system
+    assert "find_customer resolves names, never ids" in system
 
 
 def test_an_unknown_prompt_version_is_an_error():
