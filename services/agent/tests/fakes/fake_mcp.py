@@ -153,6 +153,21 @@ def create_fake_mcp(state: FakeMcp) -> tuple[FastMCP, Any]:
         )
 
     @mcp.tool()
+    async def find_customer(name: str, ctx: Context) -> CallToolResult:
+        """Find your customers by name."""
+
+        def action(sub: str, region: str) -> Any:
+            return {
+                "customers": [
+                    {"id": c["id"], "name": c["name"]}
+                    for c in CUSTOMERS.values()
+                    if c["owner"] == sub and name.strip().casefold() in c["name"].casefold()
+                ]
+            }
+
+        return await run(ctx, "find_customer", {"name": name}, action)
+
+    @mcp.tool()
     async def list_opportunities(
         customer_id: str, ctx: Context, stage: str | None = None
     ) -> CallToolResult:

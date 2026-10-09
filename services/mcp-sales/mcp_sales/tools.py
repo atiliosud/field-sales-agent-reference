@@ -38,6 +38,18 @@ def get_customer(caller: Caller, customer_id: str) -> dict[str, Any]:
     return _own_customer(caller, customer_id)
 
 
+def find_customer(caller: Caller, name: str) -> dict[str, Any]:
+    _not_blank("name", name)
+    needle = name.strip().casefold()
+    return {
+        "customers": [
+            {"id": c["id"], "name": c["name"]}
+            for c in repository.list_customers()
+            if c["owner"] == caller.id and needle in c["name"].casefold()
+        ]
+    }
+
+
 def list_opportunities(caller: Caller, customer_id: str, stage: str | None) -> dict[str, Any]:
     if stage is not None:
         _one_of("stage", stage, STAGES)
