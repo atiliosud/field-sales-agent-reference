@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
   pull_request:
+    types: [opened, synchronize, reopened, labeled]
+  workflow_dispatch:
 
 jobs:
   lint:
@@ -50,6 +52,42 @@ jobs:
           for port in 8000 8001 8002; do curl --fail --silent --show-error "http://localhost:$port/health"; done
       - name: Check Phoenix
         run: curl --fail --silent --show-error --output /dev/null --max-time 5 --retry 30 --retry-all-errors --retry-delay 2 --retry-max-time 90 http://localhost:6006
+      - if: failure()
+        run: |
+          docker compose ps
+          docker compose logs --no-color --tail 100
+      - if: always()
+        run: docker compose down --volumes
+
+  eval:
+    # Costs model calls, so it runs only on the label `run-evals` or by hand.
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'run-evals')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+      - name: Create .env with the model key
+        env:
+          AZURE_OPENAI_ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
+          AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
+          AZURE_OPENAI_DEPLOYMENT: ${{ secrets.AZURE_OPENAI_DEPLOYMENT }}
+          AZURE_OPENAI_API_VERSION: ${{ secrets.AZURE_OPENAI_API_VERSION }}
+        run: |
+          grep -v '^AZURE_OPENAI_' .env.example > .env
+          for name in AZURE_OPENAI_ENDPOINT AZURE_OPENAI_API_KEY AZURE_OPENAI_DEPLOYMENT AZURE_OPENAI_API_VERSION; do
+            printf '%s=%s\n' "$name" "${!name}" >> .env
+          done
+      - run: docker compose up --build --detach --wait
+      - name: Run the evals
+        run: uv run --locked --project evals python evals/run.py
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-report
+          path: evals/report.md
       - if: failure()
         run: |
           docker compose ps
