@@ -28,7 +28,7 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           python-version: "3.12"
-      - run: uv run pytest
+      - run: uv run --locked pytest
 
   data:
     runs-on: ubuntu-latest
@@ -37,7 +37,7 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           python-version: "3.12"
-      - run: uv run --project scripts pytest tests
+      - run: uv run --locked --project scripts pytest tests
 
   stack:
     runs-on: ubuntu-latest
