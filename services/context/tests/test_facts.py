@@ -98,7 +98,7 @@ def test_any_json_value_is_stored_as_given(client, headers, conversation):
     assert {key: fact["value"] for key, fact in facts.items()} == values
 
 
-def test_clearing_a_fact_raises_the_version_and_hides_it_from_the_slices(
+def test_a_cleared_fact_stays_in_the_orchestrator_slice_with_its_version(
     client, headers, conversation
 ):
     put_fact(client, headers, conversation, "current_customer", {"id": "c-001"}, 0)
@@ -108,8 +108,15 @@ def test_clearing_a_fact_raises_the_version_and_hides_it_from_the_slices(
 
     assert cleared.status_code == 200
     assert cleared.json() == {"key": "current_customer", "value": None, "version": 2}
-    orchestrator = context(client, headers, conversation, "orchestrator")
-    assert list(orchestrator["facts"]) == ["pending_action"]
+    facts = context(client, headers, conversation, "orchestrator")["facts"]
+    assert facts["current_customer"] == {"value": None, "version": 2}
+    assert facts["pending_action"]["value"] == {"tool": "log_visit"}
+
+
+def test_a_cleared_fact_is_not_in_the_specialist_slice(client, headers, conversation):
+    put_fact(client, headers, conversation, "current_customer", {"id": "c-001"}, 0)
+    put_fact(client, headers, conversation, "current_customer", None, 1)
+
     assert context(client, headers, conversation, "specialist")["facts"] == {}
 
 

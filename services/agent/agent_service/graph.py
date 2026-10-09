@@ -117,7 +117,9 @@ def build_graph(deps: Deps) -> CompiledStateGraph:
             HumanMessage(
                 prompt.input.format(
                     history=_history(state["history"]),
-                    facts=_json({k: v["value"] for k, v in state["facts"].items()}),
+                    facts=_json(
+                        {k: v["value"] for k, v in state["facts"].items() if v["value"] is not None}
+                    ),
                     pending=_json(pending),
                     message=state["message"],
                     specialist_result=state.get("specialist_result", "(none)"),
