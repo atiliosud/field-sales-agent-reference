@@ -49,7 +49,7 @@ The full design is in `docs/architecture.md`. The diagram is in `docs/architectu
 
 | Component | Folder | Port | Role |
 | --- | --- | --- | --- |
-| Sales MCP server | `services/mcp-sales` | 8001 | Five tools over mock CRM/ERP data, JWT check per call |
+| Sales MCP server | `services/mcp-sales` | 8001 | Six tools over mock CRM/ERP data, JWT check per call |
 | Context service | `services/context` | 8002 | Turns, facts and artefacts per conversation, in Postgres |
 | Agent service | `services/agent` | 8000 | LangGraph orchestrator and specialist, harness, chat API |
 | Postgres | (docker) | 5432 | Context storage |
@@ -126,11 +126,12 @@ field-sales-agent-reference/
 
 ### 6.2 Sales MCP server (`services/mcp-sales`)
 
-Five tools, each with a clear description and typed inputs:
+Six tools, each with a clear description and typed inputs:
 
 | Tool | Type | What it does |
 | --- | --- | --- |
 | `get_customer(customer_id)` | read | Customer details, only if owned by the caller |
+| `find_customer(name)` | read | The caller's customers whose name contains the text; a customer of someone else looks the same as one that does not exist |
 | `list_opportunities(customer_id, stage?)` | read | Opportunities for a customer owned by the caller |
 | `check_stock(product_code, region?)` | read | Stock by warehouse; defaults to the caller's region |
 | `log_visit(customer_id, summary, outcome, confirmed)` | write | Records a visit; refuses unless `confirmed` is true |
@@ -164,7 +165,7 @@ The `channel` column is what lets voice join later: the voice session writes tur
 
 - **Graph:** `orchestrator` → (`specialist` | `confirm` | `respond`). The specialist returns its result to the orchestrator, never to the user directly.
 - **Orchestrator:** owns the conversation, decides the route, writes facts, and asks for confirmation before any write action. It has no data tools.
-- **Specialist:** sales data agent. Tool allow-list: all five MCP tools, but write tools only run when the orchestrator passes `confirmed: true`.
+- **Specialist:** sales data agent. Tool allow-list: all six MCP tools, but write tools only run when the orchestrator passes `confirmed: true`.
 - **Harness (in `harness.py`, from config):** maximum 6 steps per turn, 10 seconds per tool call, 60 seconds per turn. When a limit hits, the agent says it could not finish and the span records why.
 - **Prompts:** loaded from `prompts/*.yaml` by version (`orchestrator.v1`, `specialist.v1`). The active versions come from config, and each model span carries `prompt.id` and `prompt.version`.
 - **Context:** load the slice before each turn, save the turn and facts after it.

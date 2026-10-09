@@ -90,6 +90,7 @@ def test_token_from_another_issuer_is_unauthenticated(call, parse, make_token):
 def test_missing_token_never_returns_data_from_any_tool(call, parse):
     calls = {
         "get_customer": {"customer_id": "c-001"},
+        "find_customer": {"name": "Nordic"},
         "list_opportunities": {"customer_id": "c-001"},
         "check_stock": {"product_code": "P-104"},
         "log_visit": {**VISIT, "confirmed": True},
@@ -149,6 +150,47 @@ def test_get_customer_returns_the_contract_fields(call, parse):
         "owner": "sp-001",
     }
     assert result.structuredContent == parse(result)
+
+
+def test_find_customer_matches_part_of_a_name_without_regard_to_case(call, parse):
+    result = call("find_customer", {"name": "nORDIC"})
+
+    assert result.isError is False
+    assert parse(result) == {"customers": [{"id": "c-001", "name": "Nordic Tools"}]}
+    assert result.structuredContent == parse(result)
+
+
+def test_find_customer_returns_only_the_customers_of_the_caller(call, parse, make_token):
+    token = make_token(sub="sp-002", region="South")
+
+    result = call("find_customer", {"name": "Con"}, token=token)
+
+    assert [c["id"] for c in parse(result)["customers"]] == ["c-006", "c-007"]
+
+
+def test_find_customer_with_no_match_is_an_empty_list(call, parse):
+    result = call("find_customer", {"name": "zzz"})
+
+    assert result.isError is False
+    assert parse(result) == {"customers": []}
+
+
+def test_a_customer_of_another_salesperson_looks_the_same_as_one_that_does_not_exist(
+    call, parse, make_token
+):
+    token = make_token(sub="sp-002", region="South")
+
+    other_owner = call("find_customer", {"name": "Nordic Tools"}, token=token)
+    unknown = call("find_customer", {"name": "Nonexistent Ltd"}, token=token)
+
+    assert other_owner.isError is False
+    assert parse(other_owner) == parse(unknown) == {"customers": []}
+
+
+def test_find_customer_with_a_blank_name_is_invalid(call, parse):
+    result = call("find_customer", {"name": "   "})
+
+    assert_error(result, parse, "INVALID_INPUT", "name must not be empty.")
 
 
 def test_list_opportunities_returns_all_stages(call, parse):

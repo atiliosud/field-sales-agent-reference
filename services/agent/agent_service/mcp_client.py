@@ -12,7 +12,7 @@ from agent_service.harness import Harness, HarnessLimit
 
 logger = logging.getLogger(__name__)
 
-READ_TOOLS = ("get_customer", "list_opportunities", "check_stock")
+READ_TOOLS = ("get_customer", "find_customer", "list_opportunities", "check_stock")
 WRITE_TOOLS = ("log_visit", "create_lead")
 CUSTOMER_TOOLS = ("get_customer", "list_opportunities", "log_visit")
 

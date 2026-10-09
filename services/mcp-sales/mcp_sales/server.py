@@ -62,6 +62,15 @@ async def get_customer(customer_id: str, ctx: Context) -> CallToolResult:
 
 
 @mcp.tool()
+async def find_customer(name: str, ctx: Context) -> CallToolResult:
+    """Find your customers by name. Part of the name is enough and case does not matter.
+
+    Returns the id and name of each match. The list is empty when none of your customers matches.
+    """
+    return run_tool(ctx, "find_customer", lambda caller: tools.find_customer(caller, name))
+
+
+@mcp.tool()
 async def list_opportunities(
     customer_id: str, ctx: Context, stage: str | None = None
 ) -> CallToolResult:
