@@ -26,12 +26,14 @@ class FakeContext:
 
     conversations: dict[str, Conversation] = field(default_factory=dict)
     requests: list[tuple[str, str, str | None]] = field(default_factory=list)
+    traceparents: list[str | None] = field(default_factory=list)
     failing: dict[str, int] = field(default_factory=dict)
     delay_s: float = 0.0
 
     def reset(self) -> None:
         self.conversations.clear()
         self.requests.clear()
+        self.traceparents.clear()
         self.failing.clear()
         self.delay_s = 0.0
 
@@ -61,6 +63,7 @@ def create_fake_context(state: FakeContext) -> FastAPI:
     ) -> JSONResponse:
         role = request.headers.get("x-agent-role")
         state.requests.append((request.method, request.url.path, role))
+        state.traceparents.append(request.headers.get("traceparent"))
         await asyncio.sleep(state.delay_s)
         if request.method == "POST" and conversation_id is None and "create" in state.failing:
             return _error(
