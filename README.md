@@ -4,6 +4,38 @@ Personal study project with invented data. Not affiliated with any employer or c
 
 An AI assistant for field salespeople that looks up customers, opportunities and stock, and logs visits. It runs locally with mock data.
 
+## Architecture
+
+```mermaid
+flowchart LR
+    chat["Chat client<br/>holds the salesperson's JWT"]
+
+    subgraph agent["Agent service :8000"]
+        orch["Orchestrator<br/>routing tools only,<br/>no data tools"]
+        spec["Specialist<br/>read tools, and write tools<br/>only after confirmation"]
+        orch -->|handoff| spec
+        spec -->|result| orch
+    end
+
+    subgraph auth["Authorisation boundary: the JWT is checked on every call"]
+        mcp["Sales MCP server :8001<br/>get_customer, find_customer,<br/>list_opportunities, check_stock,<br/>log_visit, create_lead<br/>ownership checked here"]
+        ctx["Context service :8002<br/>turns, facts, artefacts"]
+    end
+
+    pg[("Postgres")]
+    phoenix["Arize Phoenix :6006<br/>one trace per conversation"]
+
+    chat -->|"message + JWT"| orch
+    spec -->|"tool call + JWT"| mcp
+    orch -->|"reads and writes facts, JWT"| ctx
+    spec -->|"reads its slice, JWT"| ctx
+    ctx --> pg
+    agent -.->|spans| phoenix
+    mcp -.->|spans| phoenix
+```
+
+The salesperson's token travels with every call, and ownership of the data is checked inside the tools, not in a prompt: `get_customer` refuses a customer who belongs to someone else, and `find_customer` returns only the caller's own customers. The orchestrator can only route and never holds a data tool; the write tools run only after the salesperson has confirmed.
+
 ## Development
 
 You need Docker with Compose, Python 3.12 and [uv](https://docs.astral.sh/uv/).
