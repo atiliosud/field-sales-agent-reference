@@ -19,11 +19,11 @@ The project exists to show, in working code, six architecture ideas that matter 
 | 1 | Shared context between agents and channels | Context service |
 | 2 | Tools that act with the user's identity | Sales MCP server |
 | 3 | Multi-agent work inside a harness with limits | Agent service |
-| 4 | One trace per conversation, including business events | OpenTelemetry → Arize Phoenix |
+| 4 | One trace per turn, grouped by conversation, including business events | OpenTelemetry → Arize Phoenix |
 | 5 | No evals, no release | `evals/` and CI |
 | 6 | Decisions written down | ADRs and this document |
 
-**In scope:** text chat through an API and a CLI, six sales tools, two agents, context storage, tracing, evals, CI, local deployment with Docker Compose.
+**In scope:** text chat through an API and a CLI, seven sales tools, two agents, context storage, tracing, evals, CI, local deployment with Docker Compose.
 
 **Out of scope (documented as next steps):** voice, a web front end, a model gateway with a second provider, cloud deployment, real identity. See section 12.
 
@@ -32,7 +32,7 @@ The project exists to show, in working code, six architecture ideas that matter 
 | # | Goal | What it means here | How it is met |
 | --- | --- | --- | --- |
 | 1 | **Security by design** | A salesperson only sees and changes their own data, whatever the model decides | Authorisation in the tools, not in the prompt; JWT on every call; write actions need confirmation |
-| 2 | **Traceability** | Any answer can be explained after the fact | One trace per conversation; prompt version, tool calls, tokens and cost on spans |
+| 2 | **Traceability** | Any answer can be explained after the fact | One trace per turn, grouped by conversation (`session.id`); prompt version, tool calls, tokens and cost on spans |
 | 3 | **Quality you can measure** | A change that makes answers worse does not ship | Eval set with a pass threshold in CI |
 | 4 | **Predictable cost and latency** | An agent cannot loop or run forever | Harness limits on steps and time; token usage traced |
 | 5 | **Explainable code** | The owner can walk through every file in an interview | Small services, one language, no extra frameworks |
@@ -87,7 +87,7 @@ flowchart LR
 | Container | Responsibility | Owns data | Built by |
 | --- | --- | --- | --- |
 | Agent service | Runs the conversation: routing, tool use through the specialist, confirmation flow, harness limits, prompt loading, chat API | None (stateless) | Dev B |
-| Sales MCP server | Exposes sales data as six MCP tools; enforces who can see and change what | Mock data, visits and leads written at runtime | Dev A |
+| Sales MCP server | Exposes sales data as seven MCP tools; enforces who can see and change what | Mock data, visits and leads written at runtime | Dev A |
 | Context service | Stores and serves conversation state per agent | Conversations, turns, facts, artefacts in Postgres | Dev A |
 | Postgres | Storage for the context service | – | Dev A (schema) |
 | Arize Phoenix | Collects and shows traces | Traces | Docker image |
@@ -117,7 +117,7 @@ flowchart TD
 | `api` | `POST /chat`; reads the JWT and passes it down; returns answer, conversation id and any pending action |
 | `graph` | The LangGraph state machine above |
 | `orchestrator` | Owns the conversation. Decides the route, asks for confirmation before any write, and is the **only** writer of facts. Has no data tools |
-| `specialist` | Sales data agent. Allow-list: the six MCP tools. Runs write tools only when the orchestrator passes `confirmed: true`. Returns results to the orchestrator, never to the user |
+| `specialist` | Sales data agent. Allow-list: the seven MCP tools. Runs write tools only when the orchestrator passes `confirmed: true`. Returns results to the orchestrator, never to the user |
 | `harness` | Wraps every turn: max 6 steps, 10 s per tool call, 60 s per turn (from config). When a limit hits, the agent says it could not finish and the span records which limit |
 | `prompts` | Loads `prompts/<name>.<version>.yaml` by the versions set in config; puts `prompt.id` and `prompt.version` on model spans |
 | `model_factory` | Creates the chat model from `AZURE_OPENAI_*`. The single place to change provider |
@@ -130,7 +130,7 @@ flowchart TD
 | --- | --- |
 | `server` | FastMCP over streamable HTTP at `/mcp` |
 | `auth` | Validates the JWT on every call and returns the caller (`sub`, `region`). No token or a bad token is an error, never empty data |
-| `tools` | `get_customer`, `find_customer`, `list_opportunities`, `check_stock` (read); `log_visit`, `create_lead` (write, need `confirmed: true`) |
+| `tools` | `get_customer`, `find_customer`, `list_opportunities`, `check_stock`, `search_products` (read); `log_visit`, `create_lead` (write, need `confirmed: true`) |
 | `repository` | Reads the mock JSON; writes visits and leads to a git-ignored runtime file |
 | `telemetry` | Tool spans and business events (`business.visit_logged`, `business.lead_created`) |
 
