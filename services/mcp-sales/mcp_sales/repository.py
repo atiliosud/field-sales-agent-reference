@@ -40,6 +40,18 @@ def get_stock(product_code: str) -> list[dict[str, Any]]:
     return [line for line in _load("stock") if line["product_code"] == product_code]
 
 
+def list_products() -> list[dict[str, Any]]:
+    return _load("products")
+
+
+def get_prices(customer_id: str) -> dict[str, float]:
+    return {
+        row["product_code"]: row["unit_price_eur"]
+        for row in _load("price_lists")
+        if row["customer_id"] == customer_id
+    }
+
+
 def _append(name: str, id_key: str, id_prefix: str, record: dict[str, Any]) -> dict[str, Any]:
     path = RUNTIME_DIR / f"{name}.json"
     records = json.loads(path.read_text(encoding="utf-8")) if path.exists() else []

@@ -1,0 +1,13 @@
+[
+  { "customer_id": "c-001", "product_code": "P-101", "unit_price_eur": 127.40 },
+  { "customer_id": "c-001", "product_code": "P-104", "unit_price_eur": 41.80 },
+  { "customer_id": "c-001", "product_code": "P-110", "unit_price_eur": 262.90 },
+  { "customer_id": "c-001", "product_code": "P-114", "unit_price_eur": 18.60 },
+  { "customer_id": "c-001", "product_code": "P-115", "unit_price_eur": 79.30 },
+  { "customer_id": "c-002", "product_code": "P-104", "unit_price_eur": 42.10 },
+  { "customer_id": "c-002", "product_code": "P-111", "unit_price_eur": 24.70 },
+  { "customer_id": "c-002", "product_code": "P-114", "unit_price_eur": 19.20 },
+  { "customer_id": "c-006", "product_code": "P-101", "unit_price_eur": 131.20 },
+  { "customer_id": "c-006", "product_code": "P-104", "unit_price_eur": 43.50 },
+  { "customer_id": "c-006", "product_code": "P-107", "unit_price_eur": 689.00 }
+]

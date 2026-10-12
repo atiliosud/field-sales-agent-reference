@@ -81,3 +81,29 @@ def test_p104_is_in_stock_in_the_south(stock):
     ]
 
     assert sum(line["quantity"] for line in south) > 0
+
+
+def test_products_cover_p101_to_p120_and_match_the_stock_names(stock):
+    products = load("products")
+    names = {line["product_code"]: line["name"] for line in stock}
+
+    assert {p["product_code"]: p["name"] for p in products} == names
+    assert all(p["description"].strip() for p in products)
+
+
+def test_price_lists_point_to_existing_customers_and_products(customers):
+    rows = load("price_lists")
+    product_codes = {p["product_code"] for p in load("products")}
+
+    assert {row["customer_id"] for row in rows} <= {c["id"] for c in customers}
+    assert {row["product_code"] for row in rows} <= product_codes
+    assert len({(row["customer_id"], row["product_code"]) for row in rows}) == len(rows)
+
+
+def test_the_same_product_has_a_different_price_for_two_customers():
+    rows = load("price_lists")
+    anchors = {
+        row["customer_id"]: row["unit_price_eur"] for row in rows if row["product_code"] == "P-104"
+    }
+
+    assert len(set(anchors.values())) == len(anchors) > 1
