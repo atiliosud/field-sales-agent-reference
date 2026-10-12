@@ -51,7 +51,9 @@ The salesperson's token travels with every call, and ownership of the data is ch
 
 There are 30 rule-based cases in five groups: lookup (7), stock (5), write with confirmation (6), out of scope (4) and security (8). Each case is a short conversation as one salesperson, and each turn states the tools the agent must or must not call and the text the answer must or must not contain. The gate is a pass rate of 85%.
 
-Pass rates were between 96 and 100 in four runs of the active prompt pair on the first 26 cases, with one failure in 104 case runs. That failure was a 60 s timeout on a model call.
+The active pair is orchestrator v4 and specialist v3. On the 30 cases it was measured in three runs, one at a time: 29 of 30, 30 of 30 and 30 of 30. The one failure was `write-visit-declined` and it did not repeat. Three runs show how the pair behaves, not that it never fails.
+
+The previous pair, orchestrator v3 and specialist v2, is the comparison that justified the switch, not the rate of the system. On the 26 cases that existed before `search_products`, four runs gave between 96 and 100, with one failure in 104 case runs. That failure was a 60 s timeout on a model call. Once the tool was in the set, four runs of that pair failed `lookup-search-products` every time. The new pair passed it in all three runs, and no other case failed twice.
 
 Locally, with the stack running and the `AZURE_OPENAI_*` values in `.env`:
 
@@ -60,7 +62,7 @@ uv run --project evals python evals/run.py            # all cases
 uv run --project evals python evals/run.py --only security
 ```
 
-It writes `evals/report.md`. In CI the `eval` job costs model calls, so it runs only on a pull request with the `run-evals` label, or by hand from the Actions tab. [A run on `main` in which the `eval` job passed](https://github.com/atiliosud/field-sales-agent-reference/actions/runs/38249014910).
+It writes `evals/report.md`. In CI the `eval` job costs model calls, so it runs only on a pull request with the `run-evals` label, or by hand from the Actions tab. [A run on `main` with the active pair, in which every case passed](https://github.com/atiliosud/field-sales-agent-reference/actions/runs/38267399176).
 
 ## Development
 
