@@ -98,6 +98,25 @@ async def check_stock(product_code: str, ctx: Context, region: str | None = None
 
 
 @mcp.tool()
+async def search_products(
+    query: str, ctx: Context, in_stock_only: bool = False, customer_id: str | None = None
+) -> CallToolResult:
+    """Search the product catalogue by words in the name or description.
+
+    Anyone can find any product. Prices belong to a customer: the result carries unit_price_eur
+    only when customer_id is given, and that customer must be one of yours (otherwise FORBIDDEN).
+    A null price means the product is not on that customer's price list. in_stock_only keeps
+    products with stock in your own region.
+    """
+    return run_tool(
+        ctx,
+        "search_products",
+        lambda caller: tools.search_products(caller, query, in_stock_only, customer_id),
+        customer_id,
+    )
+
+
+@mcp.tool()
 async def log_visit(
     customer_id: str, summary: str, outcome: str, ctx: Context, confirmed: bool = False
 ) -> CallToolResult:

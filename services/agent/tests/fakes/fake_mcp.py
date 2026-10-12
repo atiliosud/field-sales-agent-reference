@@ -66,6 +66,19 @@ STOCK = {
         ],
     ),
 }
+PRODUCTS = [
+    {
+        "product_code": "P-104",
+        "name": "Heavy-duty anchor kit",
+        "description": "Expansion anchors for fixing steel and timber to concrete.",
+    },
+    {
+        "product_code": "P-114",
+        "name": "Concrete screws, box of 100",
+        "description": "Hardened screws that fix into concrete without a plug.",
+    },
+]
+PRICES = {"c-001": {"P-104": 41.80}, "c-006": {"P-104": 43.50}}
 STAGES = ("open", "quoted", "won", "lost")
 OUTCOMES = ("positive", "neutral", "negative", "follow_up")
 
@@ -211,6 +224,37 @@ def create_fake_mcp(state: FakeMcp) -> tuple[FastMCP, Any]:
         return await run(
             ctx, "check_stock", {"product_code": product_code, "region": region}, action
         )
+
+    @mcp.tool()
+    async def search_products(
+        query: str, ctx: Context, in_stock_only: bool = False, customer_id: str | None = None
+    ) -> CallToolResult:
+        """Search the catalogue. A price needs a customer of yours."""
+
+        def action(sub: str, region: str) -> Any:
+            prices: dict[str, float] | None = None
+            if customer_id is not None:
+                found = own_customer(sub, customer_id)
+                if isinstance(found, CallToolResult):
+                    return found
+                prices = PRICES.get(customer_id, {})
+            words = query.strip().casefold().split()
+            products = [
+                {
+                    **p,
+                    **(
+                        {"unit_price_eur": prices.get(p["product_code"])}
+                        if prices is not None
+                        else {}
+                    ),
+                }
+                for p in PRODUCTS
+                if all(word in f"{p['name']} {p['description']}".casefold() for word in words)
+            ]
+            return {"query": query, "customer_id": customer_id, "products": products}
+
+        args = {"query": query, "in_stock_only": in_stock_only, "customer_id": customer_id}
+        return await run(ctx, "search_products", args, action)
 
     @mcp.tool()
     async def log_visit(
