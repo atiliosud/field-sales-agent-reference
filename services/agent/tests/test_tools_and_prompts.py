@@ -83,7 +83,15 @@ def test_a_tool_that_is_not_available_is_an_invalid_input(mcp_url, mcp, token):
 
 @pytest.mark.parametrize(
     "name",
-    ["orchestrator.v1", "orchestrator.v2", "orchestrator.v3", "specialist.v1", "specialist.v2"],
+    [
+        "orchestrator.v1",
+        "orchestrator.v2",
+        "orchestrator.v3",
+        "orchestrator.v4",
+        "specialist.v1",
+        "specialist.v2",
+        "specialist.v3",
+    ],
 )
 def test_prompts_are_loaded_by_version(name):
     prompt = load_prompt(name)
@@ -92,7 +100,9 @@ def test_prompts_are_loaded_by_version(name):
     assert prompt.system and prompt.input
 
 
-@pytest.mark.parametrize("name", ["orchestrator.v1", "orchestrator.v2", "orchestrator.v3"])
+@pytest.mark.parametrize(
+    "name", ["orchestrator.v1", "orchestrator.v2", "orchestrator.v3", "orchestrator.v4"]
+)
 def test_every_routing_tool_has_a_description_in_the_orchestrator_prompt(name):
     assert set(load_prompt(name).tools) == set(ROUTING_TOOLS)
 
@@ -166,3 +176,27 @@ def test_settings_have_the_defaults_of_the_contract(monkeypatch):
         "orchestrator.v3",
         "specialist.v2",
     )
+
+
+def test_v4_sends_catalogue_questions_to_the_specialist_and_prices_need_a_customer():
+    v3 = load_prompt("orchestrator.v3")
+    v4 = load_prompt("orchestrator.v4")
+
+    assert "Nordic" not in v4.system
+    assert "never answer them from general knowledge" in " ".join(v4.system.split())
+    assert "ask which customer" in " ".join(v4.system.split())
+    assert "Discounts, special prices and approvals" in " ".join(v4.system.split())
+    assert "Never build an id from a name" in " ".join(v4.system.split())
+    assert "products" in v4.tools["handoff"]
+    assert v4.input == v3.input
+    assert set(v4.tools) == set(v3.tools)
+
+
+def test_specialist_v3_searches_products_and_gives_prices_only_for_a_given_customer():
+    v2 = load_prompt("specialist.v2")
+    v3 = load_prompt("specialist.v3")
+
+    assert "search_products" not in v2.system
+    assert "search_products" in v3.system
+    assert "Never pass an id you were not given" in " ".join(v3.system.split())
+    assert (v3.input, v3.tools) == (v2.input, v2.tools)
