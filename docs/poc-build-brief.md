@@ -11,7 +11,7 @@ It shows six architecture ideas in working code:
 1. **Shared context between agents.** One context service per conversation, so text and (later) voice see the same turns, facts and artefacts.
 2. **MCP tools with the user's identity.** Every tool call carries the salesperson's token; a salesperson only sees their own customers.
 3. **Multi-agent with a harness.** An orchestrator agent and a specialist agent, with tool allow-lists, a step limit and timeouts.
-4. **One trace per conversation.** OpenTelemetry spans for every model and tool call, plus business events (`visit_logged`, `lead_created`).
+4. **One trace per turn, grouped by conversation.** OpenTelemetry spans for every model and tool call, plus business events (`visit_logged`, `lead_created`).
 5. **No evals, no release.** A set of real-style sales questions runs in CI and blocks the merge if quality drops.
 6. **Decisions written down.** An architecture diagram and four short ADRs.
 
@@ -49,7 +49,7 @@ The full design is in `docs/architecture.md`. The diagram is in `docs/architectu
 
 | Component | Folder | Port | Role |
 | --- | --- | --- | --- |
-| Sales MCP server | `services/mcp-sales` | 8001 | Six tools over mock CRM/ERP data, JWT check per call |
+| Sales MCP server | `services/mcp-sales` | 8001 | Seven tools over mock CRM/ERP data, JWT check per call |
 | Context service | `services/context` | 8002 | Turns, facts and artefacts per conversation, in Postgres |
 | Agent service | `services/agent` | 8000 | LangGraph orchestrator and specialist, harness, chat API |
 | Postgres | (docker) | 5432 | Context storage |
@@ -129,7 +129,7 @@ field-sales-agent-reference/
 
 ### 6.2 Sales MCP server (`services/mcp-sales`)
 
-Six tools, each with a clear description and typed inputs:
+Seven tools, each with a clear description and typed inputs:
 
 | Tool | Type | What it does |
 | --- | --- | --- |
@@ -137,6 +137,7 @@ Six tools, each with a clear description and typed inputs:
 | `find_customer(name)` | read | The caller's customers whose name contains the text; a customer of someone else looks the same as one that does not exist |
 | `list_opportunities(customer_id, stage?)` | read | Opportunities for a customer owned by the caller |
 | `check_stock(product_code, region?)` | read | Stock by warehouse; defaults to the caller's region |
+| `search_products(query, in_stock_only?, customer_id?)` | read | Products whose name or description contains the words; open to every salesperson. The price comes from the price list of `customer_id` and appears only when that customer is the caller's |
 | `log_visit(customer_id, summary, outcome, confirmed)` | write | Records a visit; refuses unless `confirmed` is true |
 | `create_lead(company_name, contact, notes, confirmed)` | write | Records a new lead; refuses unless `confirmed` is true |
 
@@ -168,7 +169,7 @@ The `channel` column is what lets voice join later: the voice session writes tur
 
 - **Graph:** `orchestrator` → (`specialist` | `confirm` | `respond`). The specialist returns its result to the orchestrator, never to the user directly.
 - **Orchestrator:** owns the conversation, decides the route, writes facts, and asks for confirmation before any write action. It has no data tools.
-- **Specialist:** sales data agent. Tool allow-list: all six MCP tools, but write tools only run when the orchestrator passes `confirmed: true`.
+- **Specialist:** sales data agent. Tool allow-list: all seven MCP tools, but write tools only run when the orchestrator passes `confirmed: true`.
 - **Harness (in `harness.py`, from config):** maximum 6 steps per turn, 10 seconds per tool call, 60 seconds per turn. When a limit hits, the agent says it could not finish and the span records why.
 - **Prompts:** loaded from `prompts/*.yaml` by version (`orchestrator.v1` to `v3`, `specialist.v1` and `v2`). The active versions come from config (today `orchestrator.v3` and `specialist.v2`), and each model span carries `prompt.id` and `prompt.version`.
 - **Context:** load the slice before each turn, save the turn and facts after it.
@@ -277,7 +278,7 @@ Review README.md and docs/adr/ for accuracy against the code. List anything that
 3. Ask "Do we have P-104 in the South?"
 4. Say "Log a visit to Nordic Tools, they asked for a quote." Show that it asks for confirmation, then answer "yes".
 5. Ask about a customer owned by sp-002 and show that no data leaks.
-6. Open Phoenix: one trace for the conversation, model and tool spans (the lookup by name shows a `find_customer` span before `list_opportunities`), prompt version, tokens, and the `business.visit_logged` event.
+6. Open Phoenix: one session for the conversation, with a trace per turn, model and tool spans (the lookup by name shows a `find_customer` span before `list_opportunities`), prompt version, tokens, and the `business.visit_logged` event.
 7. Show the last eval report and one ADR.
 
 ## 9. Not done yet (for the README)
