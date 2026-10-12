@@ -145,8 +145,9 @@ broken nine legitimate cases. The right fix was a new tool, `find_customer`,
 with the ownership boundary inside it. I measured both prompt versions
 against the same cases before switching.
 
-The ADRs in `docs/adr/` were drafted against the code and are being
-rewritten in my own words. "Not done yet" below is the honest list.
+The ADRs in `docs/adr/` were drafted against the code and checked line by
+line against the files they cite. The wording is the drafts'; the decisions,
+the review and the numbers are mine. "Not done yet" below is the honest list.
 
 ## Not done yet
 
