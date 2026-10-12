@@ -93,6 +93,7 @@ def test_missing_token_never_returns_data_from_any_tool(call, parse):
         "find_customer": {"name": "Nordic"},
         "list_opportunities": {"customer_id": "c-001"},
         "check_stock": {"product_code": "P-104"},
+        "search_products": {"query": "anchor"},
         "log_visit": {**VISIT, "confirmed": True},
         "create_lead": {**LEAD, "confirmed": True},
     }
@@ -252,6 +253,109 @@ def test_check_stock_without_stock_in_the_region_is_empty_not_an_error(call, par
     assert parse(result)["total"] == 0
 
 
+# --- search_products ---------------------------------------------------------
+
+
+def codes(result, parse):
+    return [product["product_code"] for product in parse(result)["products"]]
+
+
+def test_search_products_matches_the_name_without_regard_to_case(call, parse):
+    result = call("search_products", {"query": "ANCHOR"})
+
+    assert codes(result, parse) == ["P-104"]
+
+
+def test_search_products_matches_the_description_and_ignores_accents(call, parse):
+    result = call("search_products", {"query": "MÁSONRY"})
+
+    assert "P-101" in codes(result, parse)
+
+
+def test_search_products_matches_part_of_a_word(call, parse):
+    result = call("search_products", {"query": "extract"})
+
+    assert codes(result, parse) == ["P-109"]
+
+
+def test_search_products_needs_every_word_to_match(call, parse):
+    assert codes(call("search_products", {"query": "anchor concrete"}), parse) == ["P-104"]
+    assert codes(call("search_products", {"query": "anchor laser"}), parse) == []
+
+
+def test_search_products_returns_the_catalogue_fields(call, parse):
+    product = parse(call("search_products", {"query": "anchor"}))["products"][0]
+
+    assert list(product) == ["product_code", "name", "description"]
+
+
+def test_search_products_is_open_to_every_salesperson(call, parse, make_token):
+    other = make_token(sub="sp-002", region="South")
+
+    mine = call("search_products", {"query": "drill"})
+    theirs = call("search_products", {"query": "drill"}, token=other)
+
+    assert codes(mine, parse) == codes(theirs, parse) != []
+
+
+def test_search_products_without_a_customer_carries_no_price(call, parse):
+    result = call("search_products", {"query": "drill"})
+
+    assert parse(result)["customer_id"] is None
+    assert all("unit_price_eur" not in product for product in parse(result)["products"])
+
+
+def test_search_products_gives_the_price_of_one_of_my_customers(call, parse):
+    result = call("search_products", {"query": "anchor", "customer_id": "c-001"})
+
+    assert [(p["product_code"], p["unit_price_eur"]) for p in parse(result)["products"]] == [
+        ("P-104", 41.8)
+    ]
+
+
+def test_search_products_gives_no_price_for_a_product_off_the_price_list(call, parse):
+    result = call("search_products", {"query": "laser", "customer_id": "c-001"})
+
+    assert [(p["product_code"], p["unit_price_eur"]) for p in parse(result)["products"]] == [
+        ("P-105", None)
+    ]
+
+
+def test_search_products_with_the_customer_of_another_salesperson_returns_no_price(call, parse):
+    result = call("search_products", {"query": "anchor", "customer_id": "c-006"})
+
+    assert_error(result, parse, "FORBIDDEN", "Customer c-006 is not assigned to you.")
+    assert "43.5" not in result.content[0].text
+    assert "P-104" not in result.content[0].text
+
+
+def test_search_products_cannot_read_the_price_list_of_another_salesperson(call, parse, make_token):
+    token = make_token(sub="sp-002", region="South")
+
+    result = call("search_products", {"query": "anchor", "customer_id": "c-001"}, token=token)
+
+    assert_error(result, parse, "FORBIDDEN")
+    assert "41.8" not in result.content[0].text
+
+
+def test_search_products_with_an_unknown_customer_is_not_found(call, parse):
+    result = call("search_products", {"query": "anchor", "customer_id": "c-999"})
+
+    assert_error(result, parse, "NOT_FOUND")
+
+
+def test_search_products_in_stock_only_looks_at_the_region_of_the_caller(call, parse, make_token):
+    south = make_token(sub="sp-002", region="South")
+
+    north_result = call("search_products", {"query": "hammer", "in_stock_only": True})
+    south_result = call("search_products", {"query": "hammer", "in_stock_only": True}, token=south)
+    anywhere = call("search_products", {"query": "hammer"}, token=south)
+
+    assert codes(north_result, parse) == ["P-102"]
+    assert codes(south_result, parse) == []
+    assert codes(anywhere, parse) == ["P-102"]
+
+
 # --- write tools -------------------------------------------------------------
 
 
@@ -324,6 +428,8 @@ def test_summary_of_exactly_500_characters_is_accepted(call, parse):
         ("log_visit", {**VISIT, "summary": "  ", "confirmed": True}),
         ("list_opportunities", {"customer_id": "c-001", "stage": "pending"}),
         ("check_stock", {"product_code": "P-104", "region": "East"}),
+        ("search_products", {"query": " "}),
+        ("search_products", {"query": "?!"}),
         ("create_lead", {**LEAD, "company_name": " ", "confirmed": True}),
         ("create_lead", {**LEAD, "contact": "", "confirmed": True}),
     ],
