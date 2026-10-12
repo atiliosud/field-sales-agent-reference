@@ -77,6 +77,11 @@ Server name `sales`, streamable HTTP at `/mcp`. Every tool reads the JWT from th
 - Output: `{ "product_code", "name", "region", "warehouses": [ { "warehouse", "quantity" } ], "total" }`
 - Errors: `UNAUTHENTICATED`, `NOT_FOUND`
 
+### `search_products`
+- Input: `query: str` (words; case and accents do not matter, each word may match part of a word in the name or description), `in_stock_only?: bool` (default false; keeps products with stock in the caller's region), `customer_id?: str`
+- Output: `{ "query", "customer_id", "products": [ { "product_code", "name", "description", "unit_price_eur"? } ] }`. Products have no owner, so the search is open to every salesperson. `unit_price_eur` is the price on the price list of `customer_id` and is present only when `customer_id` is given; it is `null` for a product that is not on that list. Without `customer_id` the result carries no price at all
+- Errors: `UNAUTHENTICATED`, `INVALID_INPUT` (empty query), and for a `customer_id`: `NOT_FOUND`, `FORBIDDEN` (not the caller's customer; no product and no price is returned)
+
 ### `log_visit` (write)
 - Input: `customer_id: str`, `summary: str` (max 500 chars), `outcome: "positive" | "neutral" | "negative" | "follow_up"`, `confirmed: bool`
 - Output: `{ "visit_id", "customer_id", "logged_at" }`
