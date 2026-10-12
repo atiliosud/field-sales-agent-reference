@@ -68,6 +68,26 @@ With the stack running and the `AZURE_OPENAI_*` values in `.env`, chat as a sale
 uv run --project scripts python scripts/chat.py --as sp-001
 ```
 
+## How it was built
+
+I designed this system and directed two AI coding agents to build it, acting
+as the reviewing owner on every change. The interfaces were written before
+the code (`docs/contracts.md`), every step went through a pull request I
+reviewed and merged, and a rule-based eval set gated the behaviour I cared
+about. Eighteen pull requests over three days.
+
+The method is part of the point. One eval failure turned out to be a data
+leak through the orchestrator's system prompt rather than through any tool:
+the prompt named a customer so the model could map a name to an id, and it
+repeated that name when refusing a request from a salesperson who did not
+own the record. The obvious fix was to edit the prompt, which would have
+broken nine legitimate cases. The right fix was a new tool, `find_customer`,
+with the ownership boundary inside it. I measured both prompt versions
+against the same cases before switching.
+
+The ADRs in `docs/adr/` were drafted against the code and are being
+rewritten in my own words. "Not done yet" below is the honest list.
+
 ## Not done yet
 
 - Voice through a realtime model, writing turns to the same context service.
