@@ -186,6 +186,7 @@ def test_v4_sends_catalogue_questions_to_the_specialist_and_prices_need_a_custom
     assert "never answer them from general knowledge" in " ".join(v4.system.split())
     assert "ask which customer" in " ".join(v4.system.split())
     assert "Discounts, special prices and approvals" in " ".join(v4.system.split())
+    assert "Never build an id from a name" in " ".join(v4.system.split())
     assert "products" in v4.tools["handoff"]
     assert v4.input == v3.input
     assert set(v4.tools) == set(v3.tools)
