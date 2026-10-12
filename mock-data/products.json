@@ -1,0 +1,22 @@
+[
+  { "product_code": "P-101", "name": "Cordless drill driver 18V", "description": "Compact two-speed drill driver for wood, metal and masonry, with a brushless motor." },
+  { "product_code": "P-102", "name": "Hammer drill SDS-plus", "description": "Rotary hammer for drilling and light chiselling in concrete and brick." },
+  { "product_code": "P-103", "name": "Angle grinder 125 mm", "description": "Grinder for cutting and surface work on metal and stone, with a restart protection switch." },
+  { "product_code": "P-104", "name": "Heavy-duty anchor kit", "description": "Expansion anchors with washers and nuts for fixing steel and timber to concrete." },
+  { "product_code": "P-105", "name": "Rotary laser level", "description": "Self-levelling laser for setting out floors, walls and ceilings on a building site." },
+  { "product_code": "P-106", "name": "Diamond core bit 52 mm", "description": "Wet-drilling core bit for clean round openings in reinforced concrete." },
+  { "product_code": "P-107", "name": "Cut-off saw 355 mm", "description": "Bench saw for cutting steel profiles, pipes and rebar at speed." },
+  { "product_code": "P-108", "name": "Cable detector", "description": "Handheld scanner that finds live cables and metal bars before drilling." },
+  { "product_code": "P-109", "name": "Dust extractor 1400 W", "description": "Vacuum for fine concrete dust, with a filter that cleans itself." },
+  { "product_code": "P-110", "name": "Impact wrench 1/2 inch", "description": "Cordless wrench for tightening bolts and scaffold fittings with high torque." },
+  { "product_code": "P-111", "name": "Safety helmet with visor", "description": "Lightweight helmet with a flip-up face shield and a chin strap." },
+  { "product_code": "P-112", "name": "Measuring wheel", "description": "Folding wheel for measuring distances on roads, paving and site boundaries." },
+  { "product_code": "P-113", "name": "Fastener nail gun", "description": "Gas-powered tool that drives nails into concrete and steel for light fixings." },
+  { "product_code": "P-114", "name": "Concrete screws, box of 100", "description": "Hardened screws that fix into concrete without a plug, for frames and battens." },
+  { "product_code": "P-115", "name": "Battery pack 5.2 Ah", "description": "Rechargeable battery that fits the 18V cordless range, with a charge indicator." },
+  { "product_code": "P-116", "name": "Firestop sealant cartridge", "description": "Sealant that closes gaps around pipes and cables in fire-rated walls." },
+  { "product_code": "P-117", "name": "Pipe cutter set", "description": "Hand cutters and a deburring tool for copper and plastic pipe." },
+  { "product_code": "P-118", "name": "Scaffold coupler, pack of 50", "description": "Drop-forged couplers for joining scaffold tubes at right angles." },
+  { "product_code": "P-119", "name": "Chalk line reel", "description": "Reel with a long line and blue chalk for marking straight lines on surfaces." },
+  { "product_code": "P-120", "name": "Welding helmet, auto-darkening", "description": "Helmet with a lens that darkens when the arc strikes, for steel fabrication." }
+]

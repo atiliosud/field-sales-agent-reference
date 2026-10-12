@@ -18,7 +18,7 @@ flowchart LR
     end
 
     subgraph auth["Authorisation boundary: the JWT is checked on every call"]
-        mcp["Sales MCP server :8001<br/>get_customer, find_customer,<br/>list_opportunities, check_stock,<br/>log_visit, create_lead<br/>ownership checked here"]
+        mcp["Sales MCP server :8001<br/>get_customer, find_customer,<br/>list_opportunities, check_stock,<br/>search_products, log_visit,<br/>create_lead<br/>ownership checked here"]
         ctx["Context service :8002<br/>turns, facts, artefacts"]
     end
 
@@ -132,3 +132,4 @@ rewritten in my own words. "Not done yet" below is the honest list.
 - Reading the payload of an artefact.
 - Checking the context service against a real Postgres in CI instead of SQLite.
 - Docker images that install from the lock files.
+- Vector search for the catalogue. With twenty products an index is not justified, and the interface of `search_products` does not change when one replaces the text match.
