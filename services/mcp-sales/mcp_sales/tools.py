@@ -1,3 +1,5 @@
+import re
+import unicodedata
 from typing import Any
 
 from mcp_sales import repository, telemetry
@@ -78,6 +80,39 @@ def check_stock(caller: Caller, product_code: str, region: str | None) -> dict[s
         "warehouses": warehouses,
         "total": sum(w["quantity"] for w in warehouses),
     }
+
+
+def _tokens(text: str) -> list[str]:
+    plain = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode()
+    return re.findall(r"[a-z0-9]+", plain.lower())
+
+
+def search_products(
+    caller: Caller, query: str, in_stock_only: bool, customer_id: str | None
+) -> dict[str, Any]:
+    wanted = _tokens(query)
+    if not wanted:
+        raise ToolFailure("INVALID_INPUT", "query must not be empty.")
+    prices: dict[str, float] | None = None
+    if customer_id is not None:
+        _own_customer(caller, customer_id)
+        prices = repository.get_prices(customer_id)
+
+    products = []
+    for product in repository.list_products():
+        words = _tokens(f"{product['name']} {product['description']}")
+        if not all(any(token in word for word in words) for token in wanted):
+            continue
+        if in_stock_only and not any(
+            line["region"] == caller.region and line["quantity"] > 0
+            for line in repository.get_stock(product["product_code"])
+        ):
+            continue
+        found = dict(product)
+        if prices is not None:
+            found["unit_price_eur"] = prices.get(product["product_code"])
+        products.append(found)
+    return {"query": query, "customer_id": customer_id, "products": products}
 
 
 def log_visit(
