@@ -49,9 +49,9 @@ The salesperson's token travels with every call, and ownership of the data is ch
 
 ## Evals
 
-There are 26 rule-based cases in five groups: lookup (5), stock (5), write with confirmation (6), out of scope (4) and security (6). Each case is a short conversation as one salesperson, and each turn states the tools the agent must or must not call and the text the answer must or must not contain. The gate is a pass rate of 85%.
+There are 30 rule-based cases in five groups: lookup (7), stock (5), write with confirmation (6), out of scope (4) and security (8). Each case is a short conversation as one salesperson, and each turn states the tools the agent must or must not call and the text the answer must or must not contain. The gate is a pass rate of 85%.
 
-Pass rates were between 96 and 100 in four runs of the active prompt pair, with one failure in 104 case runs. That failure was a 60 s timeout on a model call.
+Pass rates were between 96 and 100 in four runs of the active prompt pair on the first 26 cases, with one failure in 104 case runs. That failure was a 60 s timeout on a model call.
 
 Locally, with the stack running and the `AZURE_OPENAI_*` values in `.env`:
 
