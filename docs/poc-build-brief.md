@@ -98,8 +98,10 @@ field-sales-agent-reference/
 │   ├── orchestrator.v1.yaml
 │   ├── orchestrator.v2.yaml
 │   ├── orchestrator.v3.yaml
+│   ├── orchestrator.v4.yaml
 │   ├── specialist.v1.yaml
-│   └── specialist.v2.yaml
+│   ├── specialist.v2.yaml
+│   └── specialist.v3.yaml
 ├── services/
 │   ├── mcp-sales/
 │   ├── context/
@@ -171,7 +173,7 @@ The `channel` column is what lets voice join later: the voice session writes tur
 - **Orchestrator:** owns the conversation, decides the route, writes facts, and asks for confirmation before any write action. It has no data tools.
 - **Specialist:** sales data agent. Tool allow-list: all seven MCP tools, but write tools only run when the orchestrator passes `confirmed: true`.
 - **Harness (in `harness.py`, from config):** maximum 6 steps per turn, 10 seconds per tool call, 60 seconds per turn. When a limit hits, the agent says it could not finish and the span records why.
-- **Prompts:** loaded from `prompts/*.yaml` by version (`orchestrator.v1` to `v3`, `specialist.v1` and `v2`). The active versions come from config (today `orchestrator.v3` and `specialist.v2`), and each model span carries `prompt.id` and `prompt.version`.
+- **Prompts:** loaded from `prompts/*.yaml` by version (`orchestrator.v1` to `v4`, `specialist.v1` to `v3`). The active versions come from config (today `orchestrator.v4` and `specialist.v3`), and each model span carries `prompt.id` and `prompt.version`.
 - **Context:** load the slice before each turn, save the turn and facts after it.
 - **API:** `POST /chat` with body `{conversation_id?, message}` and the user's JWT. Returns the answer, the conversation id and, when relevant, a pending action waiting for confirmation.
 - **CLI client:** `scripts/chat.py --as sp-001` for the demo.
