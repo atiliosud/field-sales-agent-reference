@@ -315,6 +315,21 @@ Two salespeople (`sp-001` North, `sp-002` South), ten customers (five each), abo
 - All configuration through environment variables listed in `.env.example`.
 - `.env` is git-ignored. CI reads the model key from GitHub secrets.
 
+### 9.8 Security review
+
+Each row is a threat, the control that answers it and where the control is. Files and lines were checked against commit `5d8d32e`; line numbers move, the names do not.
+
+| Threat | Control | Where |
+| --- | --- | --- |
+| Prompt injection asks for a customer of another salesperson | The tool decides by the owner of the data, whatever the prompt says. `get_customer`, `list_opportunities`, `log_visit` and `search_products` (with a `customer_id`) refuse with `FORBIDDEN`; `find_customer` returns only the caller's own customers. | `_own_customer` (`services/mcp-sales/mcp_sales/tools.py:25`); the filter in `find_customer` (`tools.py:50`); evals `security-other-customer` and `security-other-salesperson-asks` (`evals/cases.yaml`) |
+| A write without the salesperson's consent | The confirmation is demanded in two places. The agent runs a write only after the salesperson has confirmed a pending action, and sets `confirmed` itself, overwriting whatever the model sent. The tool then refuses unless `confirmed` is true. | Agent: `_confirm_pending` (`services/agent/agent_service/graph.py:97`), the call with `confirmed=True` (`graph.py:154`), `ToolRunner.call` (`services/agent/agent_service/mcp_client.py:75-80`). Tool: `_require_confirmation` (`tools.py:34`), used by `log_visit` and `create_lead` |
+| A token or personal data in the traces | The model-call instrumentation hides inputs, outputs and message text, so tokens and cost stay and what was said does not. Tool spans carry only the tool name, the customer id and the conversation id. | `TraceConfig` with the `hide_*` flags (`services/agent/agent_service/telemetry.py:53-60`); `tool_span` (`services/mcp-sales/mcp_sales/telemetry.py:27`); tests `test_no_token_and_no_free_text_reach_a_span` and `test_spans_never_contain_the_token_or_free_text` |
+| A loop, or a runaway cost | The harness counts the model calls of a turn and limits the time of a tool and of the whole turn. Hitting a limit ends the turn with a plain message and marks the span. | `Harness.count_step`, `run_turn` and `run_tool` (`services/agent/agent_service/harness.py:54-73`), `limit_message` (`services/agent/agent_service/turn.py`); the limits and their defaults (`services/agent/agent_service/config.py:25-27`) |
+| Secrets in the repository | `.env` is git-ignored and `.env.example` holds only demo values. CI writes the model key into `.env` from GitHub secrets, in the `eval` job only. | `.gitignore:1`; `.env.example`; the "Create .env with the model key" step in `.github/workflows/ci.yml` |
+| A customer's name in the text of a prompt | The name was removed from the prompt (v3), and the mapping from name to id moved into a tool that checks the owner. | See below |
+
+The last row is the one that matters most, because it is the only control that did not live in code. It lived in the content of a prompt file. With `orchestrator.v2`, the tool refused another salesperson's request as it should, and the customer's name still reached the answer, because line 7 of the prompt named the customer so that the model could turn a name into an id (`prompts/orchestrator.v2.yaml:7`). No unit test could catch that. The eval `security-other-salesperson-asks` (`evals/cases.yaml`) did, by requiring that the name is absent from the answer. Deleting the line would have broken the cases that rely on the name, so the fix was the tool `find_customer` (`tools.py:43`), which returns only the caller's customers, and a new prompt file, `prompts/orchestrator.v3.yaml`, which tells the orchestrator to have the specialist resolve names with it. The active prompt is set by `PROMPT_ORCHESTRATOR` in `.env.example`.
+
 ## 10. Deployment
 
 ### 10.1 Built: local
