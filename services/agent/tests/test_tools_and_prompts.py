@@ -173,8 +173,8 @@ def test_settings_have_the_defaults_of_the_contract(monkeypatch):
 
     assert (settings.max_steps, settings.tool_timeout_s, settings.turn_timeout_s) == (6, 10, 60)
     assert (settings.prompt_orchestrator, settings.prompt_specialist) == (
-        "orchestrator.v3",
-        "specialist.v2",
+        "orchestrator.v4",
+        "specialist.v3",
     )
 
 
